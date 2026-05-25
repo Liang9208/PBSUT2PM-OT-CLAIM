@@ -1348,7 +1348,14 @@ function copyDataToClipboard(rows, successMsg) {
 function copyHoldbackPreview() {
   var rows = buildHoldbackPreviewRows();
   if (rows.length <= 1) { alert("No preview data to copy!"); return; }
-  copyDataToClipboard(rows, "Copied " + (rows.length - 1) + " rows of preview data (ID, NAME, TEAM, OT Reasons) to clipboard!");
+  
+  // 1. 去除表头 (使用 slice(1) 跳过第一行)
+  // 2. 遍历数据，在 TEAM (r[2]) 和 OT Reasons (r[3]) 之间插入 5 列固定值
+  var dataToCopy = rows.slice(1).map(function(r) {
+    return [r[0], r[1], r[2], '2000HRS', '0800HRS', '0800HRS', '0900HRS', '12', r[3]];
+  });
+  
+  copyDataToClipboard(dataToCopy, "Copied " + dataToCopy.length + " rows to clipboard! (Headers removed, 5 fixed columns added)");
 }
 
 function copyRosterModePreview(mode) {
@@ -1356,7 +1363,11 @@ function copyRosterModePreview(mode) {
   if (!st || !st.results.length) return;
   var rows = rmExportBodyRows(st.results);
   if (rows.length <= 1) { alert("No preview data to copy!"); return; }
-  copyDataToClipboard(rows, "Copied " + (rows.length - 1) + " rows of " + st.title + " data to clipboard!");
+  
+  // 仅去除表头 (使用 slice(1) 跳过第一行)
+  var dataToCopy = rows.slice(1);
+  
+  copyDataToClipboard(dataToCopy, "Copied " + dataToCopy.length + " rows of " + st.title + " data to clipboard! (Headers removed)");
 }
 </script>
 </body>
