@@ -187,7 +187,7 @@ table.ot tbody tr.skiprow{opacity:.45}
     <span class="sarr">&#x203A;</span>
     <div class="step" id="s3"><div class="snum">3</div>Review flights</div>
     <span class="sarr">&#x203A;</span>
-    <div class="step" id="s4"><div class="snum">4</div>Export OT form</div>
+    <div class="step" id="s4"><div class="snum">4</div>Copy &amp; Export</div>
   </div>
 
   <div id="panel1">
@@ -269,7 +269,7 @@ table.ot tbody tr.skiprow{opacity:.45}
 
   <div id="panel3" style="display:none">
     <div class="card">
-      <div class="ctitle">Step 3 - Review and export OT list</div>
+      <div class="ctitle">Step 3 - Review and prepare OT data</div>
       <div class="stats">
         <div class="stat"><div class="statn" id="stTotal">0</div><div class="statl">Officers</div></div>
         <div class="stat"><div class="statn" id="stOT" style="color:var(--green)">0</div><div class="statl">Claiming OT</div></div>
@@ -296,7 +296,6 @@ table.ot tbody tr.skiprow{opacity:.45}
       <div class="bgrp" style="margin-top:12px">
         <button class="btn preview" onclick="previewHoldbackXLSX()">&#x1F441;&#xFE0F; Preview Excel table at bottom</button>
         <button class="btn" id="copyPreviewBtn" onclick="copyHoldbackPreview()" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Copy Preview Data</button>
-        <button class="btn primary" onclick="exportXLSX()">&#x2B07; Export clean OT form (.xlsx)</button>
         <button class="btn" id="togSkipBtn" onclick="togSkipped()">Show skipped</button>
         <button class="btn" onclick="goPanel(2)">&#x2039; Back to flights</button>
       </div>
@@ -326,7 +325,6 @@ table.ot tbody tr.skiprow{opacity:.45}
         <button class="btn primary" onclick="runRosterModeAnalysis('co')">Analyse Confirm Off OT</button>
         <button class="btn preview" id="coPreviewBtn" onclick="previewRosterModeXlsx('co')" disabled>&#x1F441;&#xFE0F; Preview Excel table at bottom</button>
         <button class="btn" id="coCopyBtn" onclick="copyRosterModePreview('co')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Copy Preview Data</button>
-        <button class="btn" id="coExportBtn" onclick="exportRosterModeXlsx('co')" disabled>Export Confirm Off OT Result</button>
       </div>
       <div id="coMsg"></div>
       <div id="coReview" style="display:none;margin-top:12px"></div>
@@ -355,7 +353,6 @@ table.ot tbody tr.skiprow{opacity:.45}
         <button class="btn primary" onclick="runRosterModeAnalysis('pp')">Analyse PrePlanned OT</button>
         <button class="btn preview" id="ppPreviewBtn" onclick="previewRosterModeXlsx('pp')" disabled>&#x1F441;&#xFE0F; Preview Excel table at bottom</button>
         <button class="btn" id="ppCopyBtn" onclick="copyRosterModePreview('pp')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Copy Preview Data</button>
-        <button class="btn" id="ppExportBtn" onclick="exportRosterModeXlsx('pp')" disabled>Export PrePlanned OT Result</button>
       </div>
       <div id="ppMsg"></div>
       <div id="ppReview" style="display:none;margin-top:12px"></div>
@@ -389,7 +386,6 @@ table.ot tbody tr.skiprow{opacity:.45}
 
 
 <script>
-
 
 function initResizableSplit(){
   var app=document.querySelector('.app');
@@ -477,7 +473,7 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 function $(id){return document.getElementById(id);}
-const ROSTER_MODE_STATE = { pp:{results:[], title:'PrePlanned OT', outputSheet:'PrePlanned OT List', outputFile:'PrePlanned OT Result.xlsx'}, co:{results:[], title:'Confirm Off OT', outputSheet:'Confirm Off OT List', outputFile:'Confirm Off OT Result.xlsx'} };
+const ROSTER_MODE_STATE = { pp:{results:[], title:'PrePlanned OT'}, co:{results:[], title:'Confirm Off OT'} };
 const XNS='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 const XRNS='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 function rmUpper(v){return String(v??'').trim().toUpperCase();}
@@ -605,7 +601,7 @@ function rmBuildRosterModeReview(mode,data){
       <b>Detected colour:</b> Blue ${rmEsc(data.info.blueFills.join(', ')||'-')} | Green ${rmEsc(data.info.greenFills.join(', ')||'-')}
     </div>
     <div class="alert warn">
-      Use <b>Preview Excel table at bottom</b> to check the exact export table before downloading <b>${rmEsc(st.outputFile)}</b>.
+      Use <b>Preview Excel table at bottom</b> to check the exact preview table before copying.
     </div>
     <div class="ctitle" style="margin-top:12px">Detection details <span class="ctag">${data.results.length} match(es)</span></div>
     <div class="twrap">
@@ -616,8 +612,8 @@ function rmBuildRosterModeReview(mode,data){
     </div>`;
 }
 async function runRosterModeAnalysis(mode){
-  const file=$(mode+'File').files[0], source=$(mode+'Source').value, msg=$(mode+'Msg'), review=$(mode+'Review'), exportBtn=$(mode+'ExportBtn'), previewBtn=$(mode+'PreviewBtn'), preview=$(mode+'ExcelPreview');
-  msg.innerHTML=''; review.style.display='none'; exportBtn.disabled=true; if(previewBtn)previewBtn.disabled=true; if(preview){preview.innerHTML=''; preview.style.display='none';}
+  const file=$(mode+'File').files[0], source=$(mode+'Source').value, msg=$(mode+'Msg'), review=$(mode+'Review'), previewBtn=$(mode+'PreviewBtn'), preview=$(mode+'ExcelPreview');
+  msg.innerHTML=''; review.style.display='none'; if(previewBtn)previewBtn.disabled=true; if(preview){preview.innerHTML=''; preview.style.display='none';}
   ROSTER_MODE_STATE[mode].results=[];
   if(!file){msg.innerHTML='<div class="alert err">Please choose Excel file first.</div>'; return;}
   try{
@@ -626,10 +622,9 @@ async function runRosterModeAnalysis(mode){
     ROSTER_MODE_STATE[mode].results=data.results;
     ROSTER_MODE_STATE[mode].info=data.info;
     const exportRows=rmUniqueExportRows(data.results);
-    exportBtn.disabled=exportRows.length===0;
     if(previewBtn)previewBtn.disabled=exportRows.length===0;
     var copyBtn=$(mode+'CopyBtn'); if(copyBtn)copyBtn.disabled=exportRows.length===0;
-    msg.innerHTML='<div class="alert ok">Done. '+data.results.length+' matches found. Export table has '+exportRows.length+' unique officer row(s). Click Preview Excel table at bottom to check before export.</div>';
+    msg.innerHTML='<div class="alert ok">Done. '+data.results.length+' matches found. Preview table has '+exportRows.length+' unique officer row(s). Click Preview Excel table at bottom to check before copying.</div>';
     review.innerHTML=rmBuildRosterModeReview(mode,data);
     review.style.display='block';
   }catch(e){msg.innerHTML='<div class="alert err">'+rmEsc(e.message||e)+'</div>';}
@@ -640,15 +635,13 @@ function previewRosterModeXlsx(mode){
   if(!target||!st.results.length)return;
   const exportRows=rmUniqueExportRows(st.results);
   target.innerHTML=`
-    <div class="ctitle">Excel table preview <span class="ctag">${rmEsc(st.outputSheet)}</span></div>
-    <div class="alert warn">This is the exact table that will be exported. Only cells A1:C${exportRows.length+1} are included in the Excel file.</div>
+    <div class="ctitle">Excel table preview <span class="ctag">${rmEsc(st.title)}</span></div>
+    <div class="alert warn">This is the exact table that will be copied.</div>
     ${rmBuildExcelLikePreview(st.results)}
   `;
   target.style.display='block';
   target.scrollIntoView({behavior:'smooth',block:'start'});
 }
-function rmMakeSheetXml(rows){const bodyRows=rmExportBodyRows(rows); const body=bodyRows.map((row,ri)=>`<row r="${ri+1}">`+row.map((v,ci)=>`<c r="${rmNumToCol(ci+1)}${ri+1}" t="inlineStr"><is><t>${rmEscXml(v)}</t></is></c>`).join('')+`</row>`).join(''); return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="${XNS}" xmlns:r="${XRNS}"><sheetViews><sheetView workbookViewId="0"/></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols><col min="1" max="1" width="14" customWidth="1"/><col min="2" max="2" width="34" customWidth="1"/><col min="3" max="3" width="14" customWidth="1"/></cols><sheetData>${body}</sheetData></worksheet>`;}
-async function exportRosterModeXlsx(mode){const st=ROSTER_MODE_STATE[mode]; if(!st.results.length)return; const z=new JSZip(); const sheet=st.outputSheet; z.file('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>'); z.file('_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>'); z.file('xl/workbook.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="${XNS}" xmlns:r="${XRNS}"><sheets><sheet name="${rmEscXml(sheet)}" sheetId="1" r:id="rId1"/></sheets></workbook>`); z.file('xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'); z.file('xl/worksheets/sheet1.xml',rmMakeSheetXml(st.results)); z.file('docProps/app.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>${rmEscXml(st.title)} Builder</Application><TitlesOfParts><vt:vector size="1" baseType="lpstr"><vt:lpstr>${rmEscXml(sheet)}</vt:lpstr></vt:vector></TitlesOfParts></Properties>`); z.file('docProps/core.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${rmEscXml(sheet)}</dc:title><dc:creator>PBSU T2 OT Claim</dc:creator><cp:lastModifiedBy>PBSU T2 OT Claim</cp:lastModifiedBy><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:modified></cp:coreProperties>`); const blob=await z.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=st.outputFile; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1000);}
 function switchTool(mode){
   var isOT=mode==='ot';
   var isPP=mode==='pp';
@@ -926,6 +919,7 @@ function classifyCS(cs){
   if(/^AA\d/i.test(s)||/^A[1-9]\s*[\(\[]/i.test(s))return'rs';
   if(/^EARLY RUN/i.test(s)||/^STANDBY/i.test(s)||/^ONGOING/i.test(s)||/^COLECT/i.test(s)||/^COLLECT/i.test(s))return'rs';
   
+  // Tag as green if it contains any CC variation requested
   if(/(?:0[678]00|[78]\s*[ap]m|pm\s*[78]).*?(?:cc|con)|(?:cc|con).*?(?:0[678]00|[78]\s*[ap]m|pm\s*[78])/i.test(s)) return 'gs';
   
   if(/JASLYN|YAO\s*\dGS|EE\s*\dGS|IRFAN\s*\dGS|YEO SL/i.test(s)&&!/\(\d\)\s*[12]X/i.test(s))return'gs';
@@ -1146,7 +1140,9 @@ function buildOT(){
       
       var csl=String(cs.text||'').toLowerCase();
       
+      // Robust matcher for Team A (0700, 0600, 7am, 7pm, pm7) + (cc or con)
       var isTeamA = /(?:0[67]00|7\s*[ap]m|pm\s*7).*?(?:cc|con)|(?:cc|con).*?(?:0[67]00|7\s*[ap]m|pm\s*7)/i.test(csl);
+      // Robust matcher for Team BC (0800, 8am, 8pm, pm8) + (cc or con)
       var isTeamBC = /(?:0800|8\s*[ap]m|pm\s*8).*?(?:cc|con)|(?:cc|con).*?(?:0800|8\s*[ap]m|pm\s*8)/i.test(csl);
 
       if(isTeamA){
@@ -1159,8 +1155,13 @@ function buildOT(){
   });
 
   if(bC_flights.length > 0) {
+      // Sort so earliest flight is first
       bC_flights.sort(function(a, b){ return a.etdNum - b.etdNum; });
+      
+      // Team B gets the earliest flight
       ccBest.B = {fl:bC_flights[0].fl, gate:bC_flights[0].gate, etd:bC_flights[0].etd};
+      
+      // Team C gets the latest flight (if there is only 1 flight, they get the same one)
       var last = bC_flights[bC_flights.length - 1];
       ccBest.C = {fl:last.fl, gate:last.gate, etd:last.etd};
   }
@@ -1337,20 +1338,10 @@ function previewHoldbackXLSX(){
   var rows=buildHoldbackPreviewRows();
   target.innerHTML=''+
     '<div class="ctitle">Excel table preview <span class="ctag">Extend OT</span></div>'+
-    '<div class="alert warn">This is the exact preview of the Holdback OT export table. S/N is hidden in preview. Only claiming OT rows are included.</div>'+
+    '<div class="alert warn">This is the exact preview of the Holdback OT table. S/N is hidden in preview. Only claiming OT rows are included.</div>'+
     buildExcelPreviewFromRows(rows);
   target.style.display='block';
   target.scrollIntoView({behavior:'smooth',block:'start'});
-}
-function exportXLSX(){
-  var rows=buildHoldbackExportRows();
-  try{
-    var wb=XLSX.utils.book_new();
-    var ws2=XLSX.utils.aoa_to_sheet(rows);
-    ws2['!cols']=[{wch:5},{wch:10},{wch:32},{wch:10},{wch:30}];
-    XLSX.utils.book_append_sheet(wb,ws2,'Extend OT');
-    XLSX.writeFile(wb,'Holdback OT Result.xlsx');
-  }catch(ex){alert('Export failed: '+ex.message);}
 }
 
 function copyDataToClipboard(rows, successMsg) {
