@@ -127,7 +127,7 @@ table.ot th{padding:7px 9px;text-align:left;font-size:11px;font-weight:700;color
 table.ot td{padding:6px 9px;border-bottom:1px solid var(--border);vertical-align:middle}
 table.ot tbody tr:last-child td{border-bottom:none}
 table.ot tbody tr:hover{background:#fafaf8}
-table.ot tbody tr.skiprow{opacity:.28}
+table.ot tbody tr.skiprow{opacity:.45}
 .tag{display:inline-flex;align-items:center;font-size:11px;padding:2px 7px;border-radius:9px;font-weight:700;white-space:nowrap}
 .tag.ot{background:var(--gbg);color:var(--green);border:1px solid var(--gbd)}
 .tag.skip{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
@@ -1242,6 +1242,12 @@ function renderOTTable(list){
     if(o.claimOT&&!o.flight&&!o.isKAH)warn++;
     var row=document.createElement('tr');
     row.className=o.claimOT?'':'skiprow';
+    
+    // Completely hide skipped rows by default
+    if(!o.claimOT && !_skipped) {
+      row.style.display = 'none';
+    }
+
     row.setAttribute('data-search',(o.name+' '+o.id).toLowerCase());
     var inpid='otnote_'+o.id;
     var stag='';
@@ -1272,11 +1278,24 @@ function renderOTTable(list){
   document.getElementById('stWarn').textContent=warn;
   if(warn>0)showMsg('p3msg',warn+' OT officers have no flight - check holdback paste or add manually.','warn');
   else showMsg('p3msg','','');
+  
+  // Re-run filter to ensure search syncs with newly rendered rows
+  var q = document.getElementById('otSearch') ? document.getElementById('otSearch').value : '';
+  if(q) filterOT(q);
 }
 
 function filterOT(q){
   document.querySelectorAll('#otBody tr').forEach(function(r){
-    var txt=r.getAttribute('data-search')||'';r.style.display=(!q||txt.includes(q.toLowerCase()))?'':'none';
+    var txt=r.getAttribute('data-search')||'';
+    var match=(!q||txt.includes(q.toLowerCase()));
+    var isSkip=r.classList.contains('skiprow');
+    
+    // Sync visibility rules with the Search Bar
+    if(isSkip && !_skipped) {
+      r.style.display='none';
+    } else {
+      r.style.display=match?'':'none';
+    }
   });
 }
 
@@ -1288,7 +1307,10 @@ function toggleSelectAll(master) {
 function togSkipped(){
   _skipped=!_skipped;
   document.getElementById('togSkipBtn').textContent=_skipped?'Hide skipped':'Show skipped';
-  document.querySelectorAll('#otBody tr.skiprow').forEach(function(r){r.style.opacity=_skipped?'1':'0.28';});
+  
+  // Simply re-trigger the search filter to gracefully handle toggling
+  var q = document.getElementById('otSearch').value;
+  filterOT(q);
 }
 
 function buildHoldbackExportRows(){
