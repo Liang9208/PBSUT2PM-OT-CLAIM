@@ -806,6 +806,7 @@ function parseGrouping(ws){
   var concourse=[];
   var currentCallsignL='',currentCallsignR='';
   var currentTeam='';
+  
   function setGroupedOfficer(id,obj){
     var old=officerMap[id];
     if(old&&old.callsign&&!obj.callsign){
@@ -824,58 +825,79 @@ function parseGrouping(ws){
     var row=rows[i];
     var joined=row.join('\t');
 
-    if(/CONCOURSE/i.test(joined)){
-      i++;
-      while(i<rows.length){
-        var cr=rows[i];
-        if(!cr||cr.join('').trim()==='')break;
-        var ccIdC=String(cr[2]||'').trim();
-        var ccIdG=String(cr[6]||'').trim();
-        var ccRemC=String(cr[4]||'').trim();
-        var ccRemG=String(cr[8]||'').trim();
-        var tl='';
-        if(/TEAM\s*([ABC])/i.test(ccRemC))tl=ccRemC.match(/TEAM\s*([ABC])/i)[1].toUpperCase();
-        if(/^\d{4,}$/.test(ccIdC))concourse.push({id:ccIdC,name:stripSuffix(String(cr[3]||'')),ccTeam:tl,rem:ccRemC});
-        tl='';
-        if(/TEAM\s*([ABC])/i.test(ccRemG))tl=ccRemG.match(/TEAM\s*([ABC])/i)[1].toUpperCase();
-        if(/^\d{4,}$/.test(ccIdG))concourse.push({id:ccIdG,name:stripSuffix(String(cr[7]||'')),ccTeam:tl,rem:ccRemG});
-        i++;
+    // 1. 固定 CC 人员在第 24 到 29 行 (索引 23 到 28)
+    if(i >= 23 && i <= 28) {
+      var ccIdC = String(row[2]||'').trim();
+      var ccNmC = stripSuffix(String(row[3]||''));
+      var ccRemC = String(row[4]||'').trim();
+      
+      var ccIdG = String(row[6]||'').trim();
+      var ccNmG = stripSuffix(String(row[7]||''));
+      var ccRemG = String(row[8]||'').trim();
+      
+      if(/^\d{4,}$/.test(ccIdC)) {
+          var tlC=''; if(/TEAM\s*([ABC])/i.test(ccRemC)) tlC=ccRemC.match(/TEAM\s*([ABC])/i)[1].toUpperCase();
+          concourse.push({id:ccIdC, name:ccNmC, ccTeam:tlC, rem:ccRemC});
+      }
+      if(/^\d{4,}$/.test(ccIdG)) {
+          var tlG=''; if(/TEAM\s*([ABC])/i.test(ccRemG)) tlG=ccRemG.match(/TEAM\s*([ABC])/i)[1].toUpperCase();
+          concourse.push({id:ccIdG, name:ccNmG, ccTeam:tlG, rem:ccRemG});
       }
       continue;
     }
 
+    // 2. 团队识别逻辑 (寻找 TEAM XX)
     var rowHasTeam=false;
     for(var ci=0;ci<row.length;ci++){
       var tm=String(row[ci]||'').trim().match(/^TEAM\s*([A-Z0-9]+)/i);
       if(tm){currentTeam=tm[0];rowHasTeam=true;}
     }
-    if(rowHasTeam||joined.trim()===''){currentCallsignL='';currentCallsignR='';}
 
-    var colD=String(row[3]||'').trim();
-    var colH=String(row[7]||'').trim();
-    if(/T2\s*PM\s+\w/i.test(colD))currentCallsignL=colD;
-    if(/T2\s*PM\s+\w/i.test(colH))currentCallsignR=colH;
+    if(rowHasTeam || joined.trim()===''){
+      currentCallsignL='';
+      currentCallsignR='';
+    }
+
+    var colC = String(row[2]||'').trim().toUpperCase();
+    if(colC === 'TEAM CALL SIGN') {
+      currentCallsignL = String(row[3]||'').trim(); // 右侧 D 列
+    }
+
+    var colG = String(row[6]||'').trim().toUpperCase();
+    if(colG === 'TEAM CALL SIGN') {
+      currentCallsignR = String(row[7]||'').trim(); // 右侧 H 列
+    }
 
     var idC=String(row[2]||'').trim();
     var idG=String(row[6]||'').trim();
 
     var remC=String(row[4]||'').trim()+' '+String(row[5]||'').trim();
-    if(/CRF/i.test(colD)||/CRF/i.test(String(row[1]||'')))remC+=' CRF';
+    if(/CRF/i.test(String(row[1]||'')) || /CRF/i.test(colC)) remC+=' CRF';
+    
     var remG=String(row[8]||'').trim()+' '+String(row[9]||'').trim();
-    if(/CRF/i.test(colH)||/CRF/i.test(String(row[5]||'')))remG+=' CRF';
+    if(/CRF/i.test(String(row[5]||'')) || /CRF/i.test(colG)) remG+=' CRF';
 
-    if(/^\d{4,}$/.test(idC)&&!/SERVICE\s*ID/i.test(idC)){
-      var nm=stripSuffix(String(row[3]||''));
-      var isCallsignC=/T2\s*PM|TEAM CALL SIGN|SERVICE ID/i.test(nm)||/\(\d+\)\s*\d+X\*?$/i.test(nm);
-      if(nm&&!isCallsignC){
-        setGroupedOfficer(idC,{name:nm,callsign:currentCallsignL,team:currentTeam,rem:remC});
+    if(/^\d{4,}$/.test(idC) && !/SERVICE\s*ID/i.test(idC)){
+      var nmC=stripSuffix(String(row[3]||''));
+      if(nmC && colC !== 'TEAM CALL SIGN'){
+        setGroupedOfficer(idC, {
+          name:nmC,
+          callsign:currentCallsignL,
+          team:currentTeam,
+          rem:remC
+        });
       }
     }
-    if(/^\d{4,}$/.test(idG)&&!/SERVICE\s*ID/i.test(idG)){
-      var nm2=stripSuffix(String(row[7]||''));
-      var isCallsignG=/T2\s*PM|TEAM CALL SIGN|SERVICE ID/i.test(nm2)||/\(\d+\)\s*\d+X\*?$/i.test(nm2);
-      if(nm2&&!isCallsignG){
-        setGroupedOfficer(idG,{name:nm2,callsign:currentCallsignR,team:currentTeam,rem:remG});
+
+    if(/^\d{4,}$/.test(idG) && !/SERVICE\s*ID/i.test(idG)){
+      var nmG=stripSuffix(String(row[7]||''));
+      if(nmG && colG !== 'TEAM CALL SIGN'){
+        setGroupedOfficer(idG, {
+          name:nmG,
+          callsign:currentCallsignR,
+          team:currentTeam,
+          rem:remG
+        });
       }
     }
   }
@@ -919,7 +941,6 @@ function classifyCS(cs){
   if(/^AA\d/i.test(s)||/^A[1-9]\s*[\(\[]/i.test(s))return'rs';
   if(/^EARLY RUN/i.test(s)||/^STANDBY/i.test(s)||/^ONGOING/i.test(s)||/^COLECT/i.test(s)||/^COLLECT/i.test(s))return'rs';
   
-  // Tag as green if it contains any CC variation requested
   if(/(?:0[678]00|[78]\s*[ap]m|pm\s*[78]).*?(?:cc|con)|(?:cc|con).*?(?:0[678]00|[78]\s*[ap]m|pm\s*[78])/i.test(s)) return 'gs';
   
   if(/JASLYN|YAO\s*\dGS|EE\s*\dGS|IRFAN\s*\dGS|YEO SL/i.test(s)&&!/\(\d\)\s*[12]X/i.test(s))return'gs';
