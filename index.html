@@ -941,6 +941,7 @@ function classifyCS(cs){
   if(/^AA\d/i.test(s)||/^A[1-9]\s*[\(\[]/i.test(s))return'rs';
   if(/^EARLY RUN/i.test(s)||/^STANDBY/i.test(s)||/^ONGOING/i.test(s)||/^COLECT/i.test(s)||/^COLLECT/i.test(s))return'rs';
   
+  // Tag as green if it contains any CC variation requested
   if(/(?:0[678]00|[78]\s*[ap]m|pm\s*[78]).*?(?:cc|con)|(?:cc|con).*?(?:0[678]00|[78]\s*[ap]m|pm\s*[78])/i.test(s)) return 'gs';
   
   if(/JASLYN|YAO\s*\dGS|EE\s*\dGS|IRFAN\s*\dGS|YEO SL/i.test(s)&&!/\(\d\)\s*[12]X/i.test(s))return'gs';
@@ -1148,6 +1149,24 @@ function buildOT(){
   var kahMap=masterData.kah||{};
   var manualData=parseManualText(document.getElementById('manualText').value);
 
+  // --- SMART PRESERVE MANUAL NOTES MEMORY CACHE ---
+  var preservedNotes = {};
+  _otList.forEach(function(o){
+    var el = document.getElementById('otnote_' + o.id);
+    if(el) {
+      // Determine what the system automatically put there previously
+      var oldAuto = '';
+      if (o.isKAH) oldAuto = 'SUPERVISOR DUTY';
+      else if (o.flight) oldAuto = o.flight;
+
+      // Only memorize it if the user manually modified it (or cleared it)
+      if (el.value !== oldAuto) {
+        preservedNotes[o.id] = el.value;
+      }
+    }
+  });
+  // ------------------------------------------------
+
   var bestPerCS={};
   var ccBest={A:null,B:null,C:null};
   var bC_flights=[];
@@ -1161,9 +1180,7 @@ function buildOT(){
       
       var csl=String(cs.text||'').toLowerCase();
       
-      // Robust matcher for Team A (0700, 0600, 7am, 7pm, pm7) + (cc or con)
       var isTeamA = /(?:0[67]00|7\s*[ap]m|pm\s*7).*?(?:cc|con)|(?:cc|con).*?(?:0[67]00|7\s*[ap]m|pm\s*7)/i.test(csl);
-      // Robust matcher for Team BC (0800, 8am, 8pm, pm8) + (cc or con)
       var isTeamBC = /(?:0800|8\s*[ap]m|pm\s*8).*?(?:cc|con)|(?:cc|con).*?(?:0800|8\s*[ap]m|pm\s*8)/i.test(csl);
 
       if(isTeamA){
@@ -1176,13 +1193,8 @@ function buildOT(){
   });
 
   if(bC_flights.length > 0) {
-      // Sort so earliest flight is first
       bC_flights.sort(function(a, b){ return a.etdNum - b.etdNum; });
-      
-      // Team B gets the earliest flight
       ccBest.B = {fl:bC_flights[0].fl, gate:bC_flights[0].gate, etd:bC_flights[0].etd};
-      
-      // Team C gets the latest flight (if there is only 1 flight, they get the same one)
       var last = bC_flights[bC_flights.length - 1];
       ccBest.C = {fl:last.fl, gate:last.gate, etd:last.etd};
   }
@@ -1247,7 +1259,12 @@ function buildOT(){
       }
     }
 
-    _otList.push({id:id,name:name,team:team,status:statusRaw,isNHB:isNHB,claimOT:claimOT,skipReason:skipReason,flight:flight,gate:gate,etd:etd,ccRole:ccRole,rem:rem,isCRF:isCRF,isKAH:isKAH});
+    _otList.push({
+      id:id, name:name, team:team, status:statusRaw, isNHB:isNHB, 
+      claimOT:claimOT, skipReason:skipReason, flight:flight, gate:gate, 
+      etd:etd, ccRole:ccRole, rem:rem, isCRF:isCRF, isKAH:isKAH,
+      preservedNote: preservedNotes[id] // <-- Load from smart cache
+    });
   });
 
   renderOTTable(_otList);
@@ -1280,9 +1297,17 @@ function renderOTTable(list){
     if(o.isCRF&&o.claimOT)stag+=' <span class="tag crf">CRF</span>';
     if(o.isKAH&&o.claimOT)stag+=' <span class="tag" style="background:#e0f2fe;color:#3b82f6;border:1px solid #bae6fd">KAH</span>';
     var ccBadge=o.ccRole?'<span style="font-size:10px;background:var(--bbg);color:var(--blue);border:1px solid var(--bbd);padding:1px 5px;border-radius:6px">'+esc(o.ccRole)+'</span>':'';
+    
+    // --- LOAD SMART PRESERVED NOTE IF MODIFIED ---
     var defaultNote='';
-    if(o.isKAH)defaultNote='SUPERVISOR DUTY';
-    else if(o.flight)defaultNote=o.flight;
+    if (o.preservedNote !== undefined) {
+      defaultNote = o.preservedNote;
+    } else {
+      if(o.isKAH) defaultNote='SUPERVISOR DUTY';
+      else if(o.flight) defaultNote=o.flight;
+    }
+    // ---------------------------------------------
+
     row.innerHTML=
       '<td style="font-size:11px;color:var(--muted);font-family:monospace">'+esc(o.id)+'</td>'+
       '<td style="font-size:12px" title="'+esc(o.name)+'">'+esc(o.name.length>26?o.name.slice(0,25)+'...':o.name)+'</td>'+
