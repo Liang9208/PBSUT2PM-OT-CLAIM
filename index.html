@@ -173,7 +173,7 @@ table.ot tbody tr.skiprow{opacity:.45}
 <div class="app">
   <div class="main-left">
   <h1>PBSU T2 OT Claim</h1>
-  <p class="sub">Upload master excel &amp; flight photo. Roster sequence is preserved. Holdbacks can be pasted in Step 1.</p>
+  <p class="sub">Upload master excel &amp; flight photo. Dual-API failover enabled (Gemini + OpenRouter).</p>
   <div class="modebar">
     <button type="button" class="modebtn active" id="modeOTBtn" onclick="switchTool('ot')">Holdback OT</button>
     <button type="button" class="modebtn" id="modeCOBtn" onclick="switchTool('co')">Confirm Off OT</button>
@@ -181,34 +181,35 @@ table.ot tbody tr.skiprow{opacity:.45}
   </div>
   <div id="otMode">
   <div class="steps">
-    <div class="step active" id="s1"><div class="snum">1</div>Upload</div>
+    <div class="step active" id="s1"><div class="snum">1</div>Upload &amp; API</div>
     <span class="sarr">&#x203A;</span>
     <div class="step" id="s2"><div class="snum">2</div>AI reads photo</div>
     <span class="sarr">&#x203A;</span>
     <div class="step" id="s3"><div class="snum">3</div>Review flights</div>
     <span class="sarr">&#x203A;</span>
-    <div class="step" id="s4"><div class="snum">4</div>Copy &amp; Export</div>
+    <div class="step" id="s4"><div class="snum">4</div>Copy Data</div>
   </div>
 
   <div id="panel1">
     <div class="card">
       <div class="ctitle">Step 1 - Upload files &amp; Setup</div>
       <div class="apibox">
-        <label>Google Gemini API Keys + Auto-switch / Retry</label>
+        <label>Dual-API Failover Settings</label>
         <div class="apigrid">
-          <input type="password" id="apiKey" placeholder="API Key 1: AIzaSy..." autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" oninput="chkReady()">
-          <input type="password" id="apiKey2" placeholder="API Key 2 (Leave blank if not using): AIzaSy..." autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" oninput="chkReady()">
+          <input type="password" id="apiKey" placeholder="Gemini Key 1 (AIzaSy...)" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" oninput="chkReady()">
+          <input type="password" id="apiKey2" placeholder="OpenRouter Key 2 (sk-or-v1...)" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" oninput="chkReady()">
           <select id="modelPrimary" onchange="chkReady()">
-            <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Recommended Default)</option>
-            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-            <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro Long-context</option>
+            <option value="gemini-2.5-flash" selected>Primary: Gemini 2.5 Flash</option>
+            <option value="gemini-2.0-flash">Primary: Gemini 2.0 Flash</option>
+            <option value="gemini-1.5-pro-latest">Primary: Gemini 1.5 Pro</option>
           </select>
           <select id="modelFallback" onchange="chkReady()">
-            <option value="gemini-2.0-flash">Fallback: Gemini 2.0 Flash</option>
-            <option value="gemini-2.5-flash">Fallback: Gemini 2.5 Flash</option>
+            <option value="meta-llama/llama-3.2-11b-vision-instruct:free" selected>Fallback: Llama 3.2 Vision (Free)</option>
+            <option value="qwen/qwen-2-vl-72b-instruct">Fallback: Qwen 2 VL 72B</option>
+            <option value="google/gemini-2.0-flash-exp:free">Fallback: Gemini 2.0 (OpenRouter Free)</option>
           </select>
         </div>
-        <div class="apihint">Uses Key 1 first, then Key 2. Completely Free Tier Supported. Keys are safely kept in your local browser cache.</div>
+        <div class="apihint">Provide both keys for automatic failover. If Gemini fails or gets congested, OpenRouter takes over seamlessly.</div>
       </div>
       <div class="ugrid">
         <label class="uz" id="mz">
@@ -234,7 +235,7 @@ table.ot tbody tr.skiprow{opacity:.45}
         <button class="btn primary" id="analyseBtn" onclick="runAnalysis()" disabled>
           <span class="spin" id="aSpin" style="display:none"></span>Analyse photo with AI
         </button>
-        <span style="font-size:12px;color:var(--muted)">Both files + API key required</span>
+        <span style="font-size:12px;color:var(--muted)">Both files + at least 1 API key required</span>
       </div>
     </div>
   </div>
@@ -665,81 +666,72 @@ function setLoading(show,text){var o=document.getElementById('overlay');if(show)
 function etdNum(etd){var t=String(etd||'').replace(/[^0-9]/g,'');if(!t)return 0;if(t.length<=2)return parseInt(t)*100;return parseInt(t.slice(0,2))*100+parseInt(t.slice(2,4)||0);}
 function stripSuffix(name){return String(name||'').replace(/\s*\([A-Z]{1,4}\)\s*$/i,'').replace(/\s*-\s*NHB\s*$/i,'').replace(/\s+NHB\s*$/i,'').trim();}
 
-function getApiKeys(){
+function chkReady(){
   var k1=document.getElementById('apiKey').value.trim();
   var k2=document.getElementById('apiKey2').value.trim();
-  var keys=[];
-  if(k1)keys.push(k1);
-  if(k2&&k2!==k1)keys.push(k2);
-  return keys;
-}
-function getModels(){
-  var m1=document.getElementById('modelPrimary').value;
-  var m2=document.getElementById('modelFallback').value;
-  var models=[];
-  if(m1)models.push(m1);
-  if(m2&&m2!==m1)models.push(m2);
-  return models;
-}
-function maskKey(k){return k?k.slice(0,10)+'...'+k.slice(-4):'';}
-function sleep(ms){return new Promise(function(resolve){setTimeout(resolve,ms);});}
-function shouldRetryStatus(status){return status===408||status===409||status===429||status>=500;}
-
-function chkReady(){
-  var ok=getApiKeys().length>0&&masterData.grouping!==null&&masterData.roster.length>0&&!!photoB64;
+  var ok=(k1||k2)&&masterData.grouping!==null&&masterData.roster.length>0&&!!photoB64;
   document.getElementById('analyseBtn').disabled=!ok;
-  if(ok)showMsg('p1msg','All files loaded - ready to analyse! Auto-switch is enabled for '+getApiKeys().length+' API key(s) and '+getModels().length+' model(s).','ok');
+  if(ok){
+      var method = (k1 && k2) ? 'Dual-API Failover (Gemini + OpenRouter)' : (k1 ? 'Gemini Only' : 'OpenRouter Only');
+      showMsg('p1msg','All files loaded - ready to analyse! Using ' + method + '.','ok');
+  }
 }
 
-async function callGeminiWithFallback(keys, models, prompt, b64, mime){
-  var lastErr=null;
-  var attempts=[];
-  for(var ki=0;ki<keys.length;ki++){
-    for(var mi=0;mi<models.length;mi++){
-      for(var retry=0;retry<2;retry++){
-        var key=keys[ki],model=models[mi];
-        var label='Key '+(ki+1)+' / '+model+(retry?' retry '+retry:'');
-        attempts.push(label);
-        setLoading(true,'Trying '+label+'...');
-        try{
-          var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key;
-          var payload = {
-            contents: [{
-              parts: [
-                { text: prompt },
-                { inline_data: { mime_type: mime, data: b64 } }
-              ]
-            }],
-            generationConfig: {
-                response_mime_type: "application/json"
-            }
-          };
-          var resp=await fetch(url,{
-            method:'POST',
-            headers:{ 'Content-Type':'application/json' },
-            body:JSON.stringify(payload)
-          });
-          var data=await resp.json().catch(function(){return{};});
-          if(resp.ok&&data.candidates&&data.candidates.length>0){
-            data._usedModel=model;
-            data._usedKeyIndex=ki+1;
-            data._attempts=attempts;
-            return data;
-          }
-          var msg=(data.error&&data.error.message)?data.error.message:('HTTP '+resp.status+' '+resp.statusText);
-          lastErr=new Error(label+' failed: '+msg);
-          if(!shouldRetryStatus(resp.status))break;
-          await sleep(1500*(retry+1));
-        }catch(e){
-          lastErr=new Error(label+' failed: '+e.message);
-          await sleep(1500*(retry+1));
-        }
-      }
-    }
-  }
-  var err=new Error((lastErr?lastErr.message:'All API attempts failed')+' | Attempts: '+attempts.join(' -> '));
-  err.attempts=attempts;
-  throw err;
+async function callGeminiAPI(key, model, prompt, b64, mime){
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key;
+  var payload = {
+    contents: [{
+      parts: [
+        { text: prompt },
+        { inline_data: { mime_type: mime, data: b64 } }
+      ]
+    }],
+    generationConfig: { response_mime_type: "application/json" }
+  };
+  var resp = await fetch(url,{ method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(payload) });
+  var data = await resp.json().catch(function(){return {};});
+  
+  if(!resp.ok) throw new Error((data.error && data.error.message) || ("HTTP " + resp.status));
+  if(!data.candidates || !data.candidates[0].content) throw new Error("No content returned from Gemini");
+  
+  return {
+      text: data.candidates[0].content.parts[0].text,
+      provider: 'Google Gemini',
+      model: model
+  };
+}
+
+async function callOpenRouterAPI(key, model, prompt, b64, mime){
+  var payload = {
+      model: model,
+      messages: [{
+          role: "user",
+          content: [
+              { type: "text", text: prompt },
+              { type: "image_url", image_url: { url: "data:" + mime + ";base64," + b64 } }
+          ]
+      }]
+  };
+  var resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+          "Authorization": "Bearer " + key,
+          "Content-Type": "application/json",
+          "HTTP-Referer": window.location.href,
+          "X-Title": "PBSU T2 OT Claim"
+      },
+      body: JSON.stringify(payload)
+  });
+  var data = await resp.json().catch(function(){return {};});
+  
+  if(!resp.ok) throw new Error((data.error && data.error.message) || ("HTTP " + resp.status));
+  if(!data.choices || !data.choices[0].message) throw new Error("No content returned from OpenRouter");
+  
+  return {
+      text: data.choices[0].message.content,
+      provider: 'OpenRouter',
+      model: model
+  };
 }
 
 function loadMaster(inp){
@@ -761,8 +753,13 @@ function loadMaster(inp){
       if(aName){
         var ar=XLSX.utils.sheet_to_json(wb.Sheets[aName],{header:1,defval:''});
         for(var i=0;i<ar.length;i++)for(var j=0;j<ar[i].length;j++){var cv=String(ar[i][j]).trim();if(cv.length>10){
-            if(!document.getElementById('apiKey').value)document.getElementById('apiKey').value=cv;
-            else if(!document.getElementById('apiKey2').value)document.getElementById('apiKey2').value=cv;
+            if(cv.startsWith('AIzaSy')){
+                if(!document.getElementById('apiKey').value)document.getElementById('apiKey').value=cv;
+            } else if(cv.startsWith('sk-or-v1-')){
+                if(!document.getElementById('apiKey2').value)document.getElementById('apiKey2').value=cv;
+            } else {
+                if(!document.getElementById('apiKey').value)document.getElementById('apiKey').value=cv;
+            }
           }}
       }
       document.getElementById('mz').classList.add('done');
@@ -941,7 +938,6 @@ function classifyCS(cs){
   if(/^AA\d/i.test(s)||/^A[1-9]\s*[\(\[]/i.test(s))return'rs';
   if(/^EARLY RUN/i.test(s)||/^STANDBY/i.test(s)||/^ONGOING/i.test(s)||/^COLECT/i.test(s)||/^COLLECT/i.test(s))return'rs';
   
-  // Tag as green if it contains any CC variation requested
   if(/(?:0[678]00|[78]\s*[ap]m|pm\s*[78]).*?(?:cc|con)|(?:cc|con).*?(?:0[678]00|[78]\s*[ap]m|pm\s*[78])/i.test(s)) return 'gs';
   
   if(/JASLYN|YAO\s*\dGS|EE\s*\dGS|IRFAN\s*\dGS|YEO SL/i.test(s)&&!/\(\d\)\s*[12]X/i.test(s))return'gs';
@@ -1021,10 +1017,16 @@ function parseManualText(text){
 }
 
 async function runAnalysis(){
-  var apiKeys=getApiKeys();
-  var models=getModels();
-  if(!apiKeys.length){showMsg('p1msg','Please enter at least one valid Google Gemini API key.','err');return;}
-  if(!models.length){showMsg('p1msg','Please select at least one model.','err');return;}
+  var geminiKey = document.getElementById('apiKey').value.trim();
+  var orKey = document.getElementById('apiKey2').value.trim();
+  var geminiModel = document.getElementById('modelPrimary').value;
+  var orModel = document.getElementById('modelFallback').value;
+
+  if(!geminiKey && !orKey){
+      showMsg('p1msg','Please enter at least one valid API key (Gemini or OpenRouter).','err');
+      return;
+  }
+
   var expectedNames=[];
   var gData=masterData.grouping;
   if(gData&&gData.officerMap){
@@ -1032,10 +1034,12 @@ async function runAnalysis(){
     Object.values(gData.officerMap).forEach(function(o){if(o.callsign&&o.callsign.includes('('))csSet.add(o.callsign);});
     expectedNames=Array.from(csSet);
   }
+
   document.getElementById('aSpin').style.display='inline-block';
   document.getElementById('analyseBtn').disabled=true;
   setLoading(true,'Analysing flight photo with AI...');
   showMsg('p1msg','','');
+
   var prompt='You are transcribing a flight deployment table from an airport operations screenshot.\n\n';
   if(expectedNames.length>0){
     prompt+='CRITICAL ACCURACY: Match blurry text to these exact officer call signs:\n'+expectedNames.join(' | ')+'\n\n';
@@ -1044,13 +1048,54 @@ async function runAnalysis(){
   }
   prompt+='The table has ONE ROW PER FLIGHT. Columns: ETD | Flight number | Destination | Gate | Aircraft | Preboarding officer call signs | GS call signs | Additional codes\n\nFor EACH flight row output one JSON object:\n- "etd": 4-digit time string (e.g. "0850")\n- "flight": flight number (e.g. "SQ910", "AI2106", "UA2")\n- "gate": gate code (e.g. "F50", "E11")\n- "callsigns": array of ALL team call signs\n\nINCLUDE: Preboarding officers (e.g. "SHAREN (3) 2X", "T2 PM ESHIKAA (3) 1X", "N RAJ (3) 2X"), GS/CC (e.g. "CC 7AM (2)", "8-YAO 2GS"), RS/team codes (e.g. "T3 FUNG (3)", "3RS CQ", "A1(3)*")\n\nEXCLUDE: Individual officer names, destination codes, aircraft types, PAX, GOEM, VIPC, RETIMED, STANDBY GATE, EARLY RUN, COLECT PASS, ONGOING\n\nOne flight may span multiple lines - collect ALL call signs into ONE object.\nReturn ONLY a valid JSON array. No markdown.\n\nExample:\n[{"etd":"0850","flight":"SQ910","gate":"F50","callsigns":["HANISAH (3) 2X*","CC 7AM (2)","AA1 (3) CG"]}]';
   
+  var finalResult = null;
+  var errLog = [];
+
+  // --- ATTEMPT 1: Google Gemini ---
+  if(geminiKey) {
+      try {
+          setLoading(true, 'Requesting Google Gemini...');
+          finalResult = await callGeminiAPI(geminiKey, geminiModel, prompt, photoB64, photoMime);
+      } catch(e) {
+          errLog.push("Gemini Error: " + e.message);
+      }
+  } else {
+      errLog.push("Gemini skipped (No Key provided).");
+  }
+
+  // --- ATTEMPT 2: OpenRouter Fallback ---
+  if(!finalResult && orKey) {
+      try {
+          setLoading(true, 'Gemini failed/congested. Switching to OpenRouter (' + orModel + ')...');
+          finalResult = await callOpenRouterAPI(orKey, orModel, prompt, photoB64, photoMime);
+      } catch(e) {
+          errLog.push("OpenRouter Error: " + e.message);
+      }
+  }
+
+  // --- HANDLE FAILURE ---
+  if(!finalResult) {
+      setLoading(false);
+      document.getElementById('aSpin').style.display='none';
+      document.getElementById('analyseBtn').disabled=false;
+      showMsg('p1msg','AI Analysis Failed:<br>' + errLog.join('<br>') + '<br><br>Check your API keys, rate limits, or try again later.','err');
+      return;
+  }
+
+  // --- HANDLE SUCCESS & PARSE JSON ---
   try{
-    var data = await callGeminiWithFallback(apiKeys, models, prompt, photoB64, photoMime);
-    showMsg('p1msg','AI success using Key '+data._usedKeyIndex+' / '+data._usedModel+'.','ok');
+    showMsg('p1msg','AI success using ' + finalResult.provider + ' (' + finalResult.model + ').','ok');
     
-    // Parse Gemini Response
-    var text = data.candidates[0].content.parts[0].text || '';
-    var clean = text.replace(/```json|```/g,'').trim();
+    // Extra strong JSON extraction (Handles markdown wrappers from Open Source models)
+    var clean = finalResult.text;
+    var startIdx = clean.indexOf('[');
+    var endIdx = clean.lastIndexOf(']');
+    if(startIdx !== -1 && endIdx !== -1) {
+        clean = clean.substring(startIdx, endIdx + 1);
+    } else {
+        clean = clean.replace(/```json|```/gi,'').trim();
+    }
+    
     var parsed = JSON.parse(clean);
     
     setLoading(false);
@@ -1060,7 +1105,7 @@ async function runAnalysis(){
     setLoading(false);
     document.getElementById('aSpin').style.display='none';
     document.getElementById('analyseBtn').disabled=false;
-    showMsg('p1msg','AI error after auto-switch/retry:<br>'+esc(ex.message)+'<br><br>Check API key permission, rate limits, image size, and internet connection.','err');
+    showMsg('p1msg','Failed to parse AI output as JSON:<br>'+esc(ex.message) + '<br>Raw Output: ' + esc(finalResult.text.substring(0, 200)),'err');
   }
 }
 
@@ -1154,12 +1199,10 @@ function buildOT(){
   _otList.forEach(function(o){
     var el = document.getElementById('otnote_' + o.id);
     if(el) {
-      // Determine what the system automatically put there previously
       var oldAuto = '';
       if (o.isKAH) oldAuto = 'SUPERVISOR DUTY';
       else if (o.flight) oldAuto = o.flight;
 
-      // Only memorize it if the user manually modified it (or cleared it)
       if (el.value !== oldAuto) {
         preservedNotes[o.id] = el.value;
       }
@@ -1263,7 +1306,7 @@ function buildOT(){
       id:id, name:name, team:team, status:statusRaw, isNHB:isNHB, 
       claimOT:claimOT, skipReason:skipReason, flight:flight, gate:gate, 
       etd:etd, ccRole:ccRole, rem:rem, isCRF:isCRF, isKAH:isKAH,
-      preservedNote: preservedNotes[id] // <-- Load from smart cache
+      preservedNote: preservedNotes[id] 
     });
   });
 
@@ -1282,7 +1325,6 @@ function renderOTTable(list){
     var row=document.createElement('tr');
     row.className=o.claimOT?'':'skiprow';
     
-    // Completely hide skipped rows by default
     if(!o.claimOT && !_skipped) {
       row.style.display = 'none';
     }
@@ -1298,7 +1340,6 @@ function renderOTTable(list){
     if(o.isKAH&&o.claimOT)stag+=' <span class="tag" style="background:#e0f2fe;color:#3b82f6;border:1px solid #bae6fd">KAH</span>';
     var ccBadge=o.ccRole?'<span style="font-size:10px;background:var(--bbg);color:var(--blue);border:1px solid var(--bbd);padding:1px 5px;border-radius:6px">'+esc(o.ccRole)+'</span>':'';
     
-    // --- LOAD SMART PRESERVED NOTE IF MODIFIED ---
     var defaultNote='';
     if (o.preservedNote !== undefined) {
       defaultNote = o.preservedNote;
@@ -1306,7 +1347,6 @@ function renderOTTable(list){
       if(o.isKAH) defaultNote='SUPERVISOR DUTY';
       else if(o.flight) defaultNote=o.flight;
     }
-    // ---------------------------------------------
 
     row.innerHTML=
       '<td style="font-size:11px;color:var(--muted);font-family:monospace">'+esc(o.id)+'</td>'+
@@ -1326,7 +1366,6 @@ function renderOTTable(list){
   if(warn>0)showMsg('p3msg',warn+' OT officers have no flight - check holdback paste or add manually.','warn');
   else showMsg('p3msg','','');
   
-  // Re-run filter to ensure search syncs with newly rendered rows
   var q = document.getElementById('otSearch') ? document.getElementById('otSearch').value : '';
   if(q) filterOT(q);
 }
@@ -1337,7 +1376,6 @@ function filterOT(q){
     var match=(!q||txt.includes(q.toLowerCase()));
     var isSkip=r.classList.contains('skiprow');
     
-    // Sync visibility rules with the Search Bar
     if(isSkip && !_skipped) {
       r.style.display='none';
     } else {
@@ -1355,7 +1393,6 @@ function togSkipped(){
   _skipped=!_skipped;
   document.getElementById('togSkipBtn').textContent=_skipped?'Hide skipped':'Show skipped';
   
-  // Simply re-trigger the search filter to gracefully handle toggling
   var q = document.getElementById('otSearch').value;
   filterOT(q);
 }
@@ -1408,8 +1445,6 @@ function copyHoldbackPreview() {
   var rows = buildHoldbackPreviewRows();
   if (rows.length <= 1) { alert("No preview data to copy!"); return; }
   
-  // 1. 去除表头 (使用 slice(1) 跳过第一行)
-  // 2. 遍历数据，在 TEAM (r[2]) 和 OT Reasons (r[3]) 之间插入 5 列固定值
   var dataToCopy = rows.slice(1).map(function(r) {
     return [r[0], r[1], r[2], '2000HRS', '0800HRS', '0800HRS', '0900HRS', '12', r[3]];
   });
@@ -1423,7 +1458,6 @@ function copyRosterModePreview(mode) {
   var rows = rmExportBodyRows(st.results);
   if (rows.length <= 1) { alert("No preview data to copy!"); return; }
   
-  // 仅去除表头 (使用 slice(1) 跳过第一行)
   var dataToCopy = rows.slice(1);
   
   copyDataToClipboard(dataToCopy, "Copied " + dataToCopy.length + " rows of " + st.title + " data to clipboard! (Headers removed)");
