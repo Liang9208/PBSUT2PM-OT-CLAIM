@@ -199,17 +199,17 @@ table.ot tbody tr.skiprow{opacity:.45}
           <input type="password" id="apiKey" placeholder="Gemini Key 1 (AIzaSy...)" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" oninput="chkReady()">
           <input type="password" id="apiKey2" placeholder="OpenRouter Key 2 (sk-or-v1...)" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" oninput="chkReady()">
           <select id="modelPrimary" onchange="chkReady()">
-            <option value="gemini-2.5-flash" selected>Primary: Gemini 2.5 Flash</option>
-            <option value="gemini-2.0-flash">Primary: Gemini 2.0 Flash</option>
+            <option value="gemini-2.0-flash" selected>Primary: Gemini 2.0 Flash (Recommended)</option>
+            <option value="gemini-2.5-flash">Primary: Gemini 2.5 Flash</option>
             <option value="gemini-1.5-pro-latest">Primary: Gemini 1.5 Pro</option>
           </select>
           <select id="modelFallback" onchange="chkReady()">
             <option value="meta-llama/llama-3.2-11b-vision-instruct:free" selected>Fallback: Llama 3.2 Vision (Free)</option>
             <option value="qwen/qwen-2-vl-72b-instruct">Fallback: Qwen 2 VL 72B</option>
-            <option value="google/gemini-2.0-flash-exp:free">Fallback: Gemini 2.0 (OpenRouter Free)</option>
+            <option value="google/gemini-2.0-flash-lite-preview-02-05:free">Fallback: Gemini 2.0 Flash Lite (Free)</option>
           </select>
         </div>
-        <div class="apihint">Provide both keys for automatic failover. If Gemini fails or gets congested, OpenRouter takes over seamlessly.</div>
+        <div class="apihint">Uses Key 1 first, then Key 2. Completely Free Tier Supported. Keys are safely kept in your local browser cache.</div>
       </div>
       <div class="ugrid">
         <label class="uz" id="mz">
@@ -938,6 +938,7 @@ function classifyCS(cs){
   if(/^AA\d/i.test(s)||/^A[1-9]\s*[\(\[]/i.test(s))return'rs';
   if(/^EARLY RUN/i.test(s)||/^STANDBY/i.test(s)||/^ONGOING/i.test(s)||/^COLECT/i.test(s)||/^COLLECT/i.test(s))return'rs';
   
+  // Tag as green if it contains any CC variation requested
   if(/(?:0[678]00|[78]\s*[ap]m|pm\s*[78]).*?(?:cc|con)|(?:cc|con).*?(?:0[678]00|[78]\s*[ap]m|pm\s*[78])/i.test(s)) return 'gs';
   
   if(/JASLYN|YAO\s*\dGS|EE\s*\dGS|IRFAN\s*\dGS|YEO SL/i.test(s)&&!/\(\d\)\s*[12]X/i.test(s))return'gs';
@@ -1046,7 +1047,9 @@ async function runAnalysis(){
   } else {
     prompt+='CRITICAL ACCURACY: Copy call signs EXACTLY as they appear in the image.\n\n';
   }
-  prompt+='The table has ONE ROW PER FLIGHT. Columns: ETD | Flight number | Destination | Gate | Aircraft | Preboarding officer call signs | GS call signs | Additional codes\n\nFor EACH flight row output one JSON object:\n- "etd": 4-digit time string (e.g. "0850")\n- "flight": flight number (e.g. "SQ910", "AI2106", "UA2")\n- "gate": gate code (e.g. "F50", "E11")\n- "callsigns": array of ALL team call signs\n\nINCLUDE: Preboarding officers (e.g. "SHAREN (3) 2X", "T2 PM ESHIKAA (3) 1X", "N RAJ (3) 2X"), GS/CC (e.g. "CC 7AM (2)", "8-YAO 2GS"), RS/team codes (e.g. "T3 FUNG (3)", "3RS CQ", "A1(3)*")\n\nEXCLUDE: Individual officer names, destination codes, aircraft types, PAX, GOEM, VIPC, RETIMED, STANDBY GATE, EARLY RUN, COLECT PASS, ONGOING\n\nOne flight may span multiple lines - collect ALL call signs into ONE object.\nReturn ONLY a valid JSON array. No markdown.\n\nExample:\n[{"etd":"0850","flight":"SQ910","gate":"F50","callsigns":["HANISAH (3) 2X*","CC 7AM (2)","AA1 (3) CG"]}]';
+  prompt+='The table has ONE ROW PER FLIGHT. Columns: ETD | Flight number | Destination | Gate | Aircraft | Preboarding officer call signs | GS call signs | Additional codes\n\n' +
+  'CRITICAL INSTRUCTION: You MUST read the table row by row from top to bottom. DO NOT SKIP ANY FLIGHTS. DO NOT SUMMARIZE. Extract EVERY SINGLE FLIGHT visible in the image.\n\n' +
+  'For EACH flight row output one JSON object:\n- "etd": 4-digit time string (e.g. "0850")\n- "flight": flight number (e.g. "SQ910", "AI2106", "UA2")\n- "gate": gate code (e.g. "F50", "E11")\n- "callsigns": array of ALL team call signs\n\nINCLUDE: Preboarding officers (e.g. "SHAREN (3) 2X", "T2 PM ESHIKAA (3) 1X", "N RAJ (3) 2X"), GS/CC (e.g. "CC 7AM (2)", "8-YAO 2GS"), RS/team codes (e.g. "T3 FUNG (3)", "3RS CQ", "A1(3)*")\n\nEXCLUDE: Individual officer names, destination codes, aircraft types, PAX, GOEM, VIPC, RETIMED, STANDBY GATE, EARLY RUN, COLECT PASS, ONGOING\n\nOne flight may span multiple lines - collect ALL call signs into ONE object.\nReturn ONLY a valid JSON array. No markdown.\n\nExample:\n[{"etd":"0850","flight":"SQ910","gate":"F50","callsigns":["HANISAH (3) 2X*","CC 7AM (2)","AA1 (3) CG"]}]';
   
   var finalResult = null;
   var errLog = [];
@@ -1054,7 +1057,7 @@ async function runAnalysis(){
   // --- ATTEMPT 1: Google Gemini ---
   if(geminiKey) {
       try {
-          setLoading(true, 'Requesting Google Gemini...');
+          setLoading(true, 'Requesting Google Gemini (' + geminiModel + ')...');
           finalResult = await callGeminiAPI(geminiKey, geminiModel, prompt, photoB64, photoMime);
       } catch(e) {
           errLog.push("Gemini Error: " + e.message);
@@ -1199,10 +1202,12 @@ function buildOT(){
   _otList.forEach(function(o){
     var el = document.getElementById('otnote_' + o.id);
     if(el) {
+      // Determine what the system automatically put there previously
       var oldAuto = '';
       if (o.isKAH) oldAuto = 'SUPERVISOR DUTY';
       else if (o.flight) oldAuto = o.flight;
 
+      // Only memorize it if the user manually modified it (or cleared it)
       if (el.value !== oldAuto) {
         preservedNotes[o.id] = el.value;
       }
@@ -1306,7 +1311,7 @@ function buildOT(){
       id:id, name:name, team:team, status:statusRaw, isNHB:isNHB, 
       claimOT:claimOT, skipReason:skipReason, flight:flight, gate:gate, 
       etd:etd, ccRole:ccRole, rem:rem, isCRF:isCRF, isKAH:isKAH,
-      preservedNote: preservedNotes[id] 
+      preservedNote: preservedNotes[id] // <-- Load from smart cache
     });
   });
 
@@ -1325,6 +1330,7 @@ function renderOTTable(list){
     var row=document.createElement('tr');
     row.className=o.claimOT?'':'skiprow';
     
+    // Completely hide skipped rows by default
     if(!o.claimOT && !_skipped) {
       row.style.display = 'none';
     }
@@ -1340,6 +1346,7 @@ function renderOTTable(list){
     if(o.isKAH&&o.claimOT)stag+=' <span class="tag" style="background:#e0f2fe;color:#3b82f6;border:1px solid #bae6fd">KAH</span>';
     var ccBadge=o.ccRole?'<span style="font-size:10px;background:var(--bbg);color:var(--blue);border:1px solid var(--bbd);padding:1px 5px;border-radius:6px">'+esc(o.ccRole)+'</span>':'';
     
+    // --- LOAD SMART PRESERVED NOTE IF MODIFIED ---
     var defaultNote='';
     if (o.preservedNote !== undefined) {
       defaultNote = o.preservedNote;
@@ -1347,6 +1354,7 @@ function renderOTTable(list){
       if(o.isKAH) defaultNote='SUPERVISOR DUTY';
       else if(o.flight) defaultNote=o.flight;
     }
+    // ---------------------------------------------
 
     row.innerHTML=
       '<td style="font-size:11px;color:var(--muted);font-family:monospace">'+esc(o.id)+'</td>'+
@@ -1366,6 +1374,7 @@ function renderOTTable(list){
   if(warn>0)showMsg('p3msg',warn+' OT officers have no flight - check holdback paste or add manually.','warn');
   else showMsg('p3msg','','');
   
+  // Re-run filter to ensure search syncs with newly rendered rows
   var q = document.getElementById('otSearch') ? document.getElementById('otSearch').value : '';
   if(q) filterOT(q);
 }
@@ -1376,6 +1385,7 @@ function filterOT(q){
     var match=(!q||txt.includes(q.toLowerCase()));
     var isSkip=r.classList.contains('skiprow');
     
+    // Sync visibility rules with the Search Bar
     if(isSkip && !_skipped) {
       r.style.display='none';
     } else {
@@ -1393,6 +1403,7 @@ function togSkipped(){
   _skipped=!_skipped;
   document.getElementById('togSkipBtn').textContent=_skipped?'Hide skipped':'Show skipped';
   
+  // Simply re-trigger the search filter to gracefully handle toggling
   var q = document.getElementById('otSearch').value;
   filterOT(q);
 }
@@ -1445,6 +1456,8 @@ function copyHoldbackPreview() {
   var rows = buildHoldbackPreviewRows();
   if (rows.length <= 1) { alert("No preview data to copy!"); return; }
   
+  // 1. 去除表头 (使用 slice(1) 跳过第一行)
+  // 2. 遍历数据，在 TEAM (r[2]) 和 OT Reasons (r[3]) 之间插入 5 列固定值
   var dataToCopy = rows.slice(1).map(function(r) {
     return [r[0], r[1], r[2], '2000HRS', '0800HRS', '0800HRS', '0900HRS', '12', r[3]];
   });
@@ -1458,6 +1471,7 @@ function copyRosterModePreview(mode) {
   var rows = rmExportBodyRows(st.results);
   if (rows.length <= 1) { alert("No preview data to copy!"); return; }
   
+  // 仅去除表头 (使用 slice(1) 跳过第一行)
   var dataToCopy = rows.slice(1);
   
   copyDataToClipboard(dataToCopy, "Copied " + dataToCopy.length + " rows of " + st.title + " data to clipboard! (Headers removed)");
