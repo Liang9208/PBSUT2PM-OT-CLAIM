@@ -204,12 +204,13 @@ table.ot tbody tr.skiprow{opacity:.45}
             <option value="gemini-1.5-pro-latest">Primary: Gemini 1.5 Pro</option>
           </select>
           <select id="modelFallback" onchange="chkReady()">
-            <option value="google/gemini-2.0-flash-001" selected>Fallback: Gemini 2.0 Flash (Paid/Stable)</option>
-            <option value="anthropic/claude-3.5-sonnet">Fallback: Claude 3.5 Sonnet (Best OCR)</option>
-            <option value="qwen/qwen-2.5-vl-72b-instruct">Fallback: Qwen 2.5 VL 72B (Paid/Stable)</option>
+            <option value="openai/gpt-4o" selected>Fallback: GPT-4o (Full Version, Best OCR)</option>
+            <option value="qwen/qwen-2.5-vl-72b-instruct">Fallback: Qwen 2.5 VL 72B</option>
+            <option value="google/gemini-1.5-pro">Fallback: Gemini 1.5 Pro (via OpenRouter)</option>
+            <option value="anthropic/claude-3.5-sonnet">Fallback: Claude 3.5 Sonnet</option>
           </select>
         </div>
-        <div class="apihint">Uses Key 1 first, then Key 2. OpenRouter fallback models have been updated to reliable, stable (paid) endpoints.</div>
+        <div class="apihint">Uses Key 1 first, then Key 2. Fallbacks updated to prevent data skipping (max tokens forced to 8192).</div>
       </div>
       <div class="ugrid">
         <label class="uz" id="mz">
@@ -686,7 +687,10 @@ async function callGeminiAPI(key, model, prompt, b64, mime){
         { inline_data: { mime_type: mime, data: b64 } }
       ]
     }],
-    generationConfig: { response_mime_type: "application/json" }
+    generationConfig: { 
+        response_mime_type: "application/json",
+        maxOutputTokens: 8192  // Force Gemini to not truncate large tables
+    }
   };
   var resp = await fetch(url,{ method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(payload) });
   var data = await resp.json().catch(function(){return {};});
@@ -710,7 +714,8 @@ async function callOpenRouterAPI(key, model, prompt, b64, mime){
               { type: "text", text: prompt },
               { type: "image_url", image_url: { url: "data:" + mime + ";base64," + b64 } }
           ]
-      }]
+      }],
+      max_tokens: 8192 // Force OpenRouter models to not truncate large tables
   };
   var resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -1047,8 +1052,10 @@ async function runAnalysis(){
   } else {
     prompt+='CRITICAL ACCURACY: Copy call signs EXACTLY as they appear in the image.\n\n';
   }
+  
+  // 极度严厉的防偷懒提示词，防止大型 AI 遗漏航班
   prompt+='The table has ONE ROW PER FLIGHT. Columns: ETD | Flight number | Destination | Gate | Aircraft | Preboarding officer call signs | GS call signs | Additional codes\n\n' +
-  'CRITICAL INSTRUCTION: You MUST read the table row by row from top to bottom. DO NOT SKIP ANY FLIGHTS. DO NOT SUMMARIZE. Extract EVERY SINGLE FLIGHT visible in the image.\n\n' +
+  'CRITICAL INSTRUCTION: You MUST read the table row by row from top to bottom. DO NOT SKIP ANY FLIGHTS. DO NOT TRUNCATE. Extract EVERY SINGLE FLIGHT visible in the image. You will fail if you stop early or summarize.\n\n' +
   'For EACH flight row output one JSON object:\n- "etd": 4-digit time string (e.g. "0850")\n- "flight": flight number (e.g. "SQ910", "AI2106", "UA2")\n- "gate": gate code (e.g. "F50", "E11")\n- "callsigns": array of ALL team call signs\n\nINCLUDE: Preboarding officers (e.g. "SHAREN (3) 2X", "T2 PM ESHIKAA (3) 1X", "N RAJ (3) 2X"), GS/CC (e.g. "CC 7AM (2)", "8-YAO 2GS"), RS/team codes (e.g. "T3 FUNG (3)", "3RS CQ", "A1(3)*")\n\nEXCLUDE: Individual officer names, destination codes, aircraft types, PAX, GOEM, VIPC, RETIMED, STANDBY GATE, EARLY RUN, COLECT PASS, ONGOING\n\nOne flight may span multiple lines - collect ALL call signs into ONE object.\nReturn ONLY a valid JSON array. No markdown.\n\nExample:\n[{"etd":"0850","flight":"SQ910","gate":"F50","callsigns":["HANISAH (3) 2X*","CC 7AM (2)","AA1 (3) CG"]}]';
   
   var finalResult = null;
@@ -1089,7 +1096,6 @@ async function runAnalysis(){
   try{
     showMsg('p1msg','AI success using ' + finalResult.provider + ' (' + finalResult.model + ').','ok');
     
-    // Extra strong JSON extraction (Handles markdown wrappers from Open Source models)
     var clean = finalResult.text;
     var startIdx = clean.indexOf('[');
     var endIdx = clean.lastIndexOf(']');
