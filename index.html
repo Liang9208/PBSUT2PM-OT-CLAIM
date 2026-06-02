@@ -199,14 +199,14 @@ table.ot tbody tr.skiprow{opacity:.45}
           <input type="password" id="apiKey" placeholder="Gemini Key 1 (AIzaSy...)" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" oninput="chkReady()">
           <input type="password" id="apiKey2" placeholder="OpenRouter Key 2 (sk-or-v1...)" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" oninput="chkReady()">
           <select id="modelPrimary" onchange="chkReady()">
-            <option value="gemini-2.0-flash" selected>Primary: Gemini 2.0 Flash (Recommended)</option>
-            <option value="gemini-2.5-flash">Primary: Gemini 2.5 Flash</option>
+            <option value="gemini-2.5-flash" selected>Primary: Gemini 2.5 Flash</option>
+            <option value="gemini-2.0-flash">Primary: Gemini 2.0 Flash</option>
             <option value="gemini-1.5-pro-latest">Primary: Gemini 1.5 Pro</option>
           </select>
           <select id="modelFallback" onchange="chkReady()">
-            <option value="openai/gpt-4o-mini" selected>Fallback: GPT-4o-Mini (Fast & Reliable)</option>
-            <option value="google/gemini-2.0-flash">Fallback: Gemini 2.0 Flash (Via OpenRouter)</option>
-            <option value="mistralai/pixtral-12b:free">Fallback: Pixtral 12B (Free)</option>
+            <option value="google/gemini-2.0-pro-exp-02-05:free" selected>Fallback: Gemini 2.0 Pro Exp (Free)</option>
+            <option value="qwen/qwen-2.5-vl-72b-instruct:free">Fallback: Qwen 2.5 VL 72B (Free)</option>
+            <option value="anthropic/claude-3.2-haiku-20241022:beta">Fallback: Claude 3.2 Haiku</option>
           </select>
         </div>
         <div class="apihint">Uses Key 1 first, then Key 2. OpenRouter fallback models have been optimized for high reliability.</div>
