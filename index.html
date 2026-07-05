@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,136 +6,8 @@
 <title>PBSU T2 OT Claim</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
---bg:#f5f4f0;--surface:#fff;--border:#e2dfd8;--bmed:#c5c0b8;
---text:#1a1a18;--muted:#6b6860;--faint:#aaa8a2;
---green:#1a7a4a;--gbg:#eaf5ef;--gbd:#b6dfc7;
---amber:#8a5a00;--abg:#fef8e7;--abd:#f0d080;
---red:#a02020;--rbg:#fdf0f0;--rbd:#f0c0c0;
---blue:#1a4a8a;--bbg:#eef4fd;--bbd:#b8d0f5;
---r:10px;--rs:6px;
-}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
-.app{max-width:1200px;margin:0 auto;padding:24px 16px 60px;}
-.main-left{width:100%;}
-h1{font-size:20px;font-weight:700;letter-spacing:-.3px;margin-bottom:3px}
-.sub{font-size:13px;color:var(--muted);margin-bottom:18px}
-.steps{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:16px;flex-wrap:wrap}
-.step{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--faint);padding:2px 6px 2px 0}
-.step.active{color:var(--text);font-weight:700}
-.step.done{color:var(--green)}
-.snum{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--bmed);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
-.step.active .snum{background:var(--text);color:#fff;border-color:var(--text)}
-.step.done .snum{background:var(--gbg);color:var(--green);border-color:var(--gbd)}
-.sarr{color:var(--bmed);font-size:13px;margin:0 1px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:12px}
-.ctitle{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.ctag{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg);border:1px solid var(--border);color:var(--muted)}
-.ugrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.uz{display:block;border:1.5px dashed var(--bmed);border-radius:var(--rs);padding:16px 10px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}
-.uz:hover{border-color:var(--text);background:var(--bg)}
-.uz.done{border-style:solid;border-color:var(--gbd);background:var(--gbg)}
-.uz input[type="file"]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
-.uzi{font-size:22px;margin-bottom:4px}
-.uzl{font-size:13px;font-weight:600}
-.uzs{font-size:11px;color:var(--muted);margin-top:2px}
-.uzf{font-size:11px;color:var(--green);margin-top:4px;font-weight:600;word-break:break-all;line-height:1.3}
-.uzth{max-width:100%;max-height:70px;border-radius:4px;margin-top:5px;object-fit:cover}
-.apibox{background:var(--abg);border:1px solid var(--abd);border-radius:var(--rs);padding:11px 13px;margin-bottom:12px}
-.apibox label{display:block;font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-.apibox input,.apibox select{width:100%;font-size:13px;padding:6px 9px;border-radius:var(--rs);border:1px solid var(--abd);background:#fff;color:var(--text);font-family:monospace}
-.apigrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
-@media(max-width:640px){.apigrid{grid-template-columns:1fr}}
-.apihint{font-size:11px;color:var(--amber);margin-top:4px;line-height:1.5}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rs);border:1px solid var(--bmed);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s;font-weight:500;white-space:nowrap}
-.btn:hover{background:var(--bg)}
-.btn:active{transform:scale(.98)}
-.btn.primary{background:var(--text);color:#fff;border-color:var(--text)}
-.btn.primary:hover{opacity:.85}
-.btn.preview{background:var(--bbg);color:var(--blue);border-color:var(--bbd);font-weight:700}
-.btn.preview:hover{background:#dfeafb;border-color:#8fb2e8}
-.btn.preview:disabled{background:var(--bbg);color:var(--blue);border-color:var(--bbd)}
-.btn:disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
-.bgrp{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
-.alert{font-size:12px;padding:8px 11px;border-radius:var(--rs);margin:7px 0;line-height:1.5}
-.alert.err{background:var(--rbg);color:var(--red);border:1px solid var(--rbd)}
-.alert.ok{background:var(--gbg);color:var(--green);border:1px solid var(--gbd)}
-.alert.warn{background:var(--abg);color:var(--amber);border:1px solid var(--abd)}
-.sbox{position:relative;margin-bottom:8px}
-.sbox input{width:100%;font-size:13px;padding:7px 11px 7px 30px;border-radius:var(--rs);border:1px solid var(--bmed);background:var(--surface);color:var(--text);font-family:inherit}
-.sbox input:focus{outline:none;border-color:var(--text)}
-.sbox::before{content:'\2315';position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--faint);font-size:15px;pointer-events:none}
-.holdbox{background:#f0f4ff;border:1px solid var(--bbd);border-radius:var(--rs);padding:12px;margin-bottom:12px}
-.holdbox label{display:block;font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
-.holdbox textarea{width:100%;font-size:12px;padding:7px 9px;border-radius:var(--rs);border:1px solid var(--bbd);background:#fff;color:var(--text);font-family:inherit;resize:vertical;outline:none}
-.holdbox textarea:focus{border-color:var(--blue)}
-.holdbox .hint{font-size:11px;color:var(--blue);margin-top:5px;opacity:.8}
-.ftbl{width:100%;border-collapse:collapse;font-size:12px}
-.ftbl th{padding:6px 9px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap}
-.ftbl td{padding:6px 9px;border-bottom:1px solid var(--border);vertical-align:top}
-.ftbl tbody tr:last-child td{border-bottom:none}
-.ftbl tbody tr:hover{background:#fafaf8}
-.cstags{display:flex;flex-wrap:wrap;gap:3px;align-items:center}
-.cstag{display:inline-flex;align-items:center;gap:2px;font-size:11px;padding:2px 6px;border-radius:7px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:default}
-.cstag.pb{border-color:#c0d8f0;background:#eef4fd;color:#1a4a8a}
-.cstag.gs{border-color:#c8e8c8;background:#eaf5ea;color:#1a6a2a}
-.cstag.rs{border-color:var(--abd);background:var(--abg);color:var(--amber)}
-.cstag .rm{background:none;border:none;cursor:pointer;color:inherit;opacity:.5;font-size:11px;line-height:1;padding:0 0 0 2px;font-family:inherit}
-.cstag .rm:hover{opacity:1}
-.addcs{font-size:11px;padding:2px 6px;border-radius:7px;border:1px dashed var(--bmed);background:none;color:var(--muted);cursor:pointer;font-family:inherit}
-.addcs:hover{border-color:var(--text);color:var(--text)}
-.delrow{background:none;border:none;cursor:pointer;color:var(--faint);font-size:14px;padding:2px;border-radius:4px}
-.delrow:hover{background:var(--rbg);color:var(--red)}
-input.inl{font-size:12px;padding:3px 6px;border:1px solid var(--bmed);border-radius:4px;background:var(--surface);color:var(--text);font-family:inherit}
-input.inl:focus{outline:none;border-color:var(--text)}
-input.csedit{font-size:11px;padding:3px 6px;border:1px solid var(--bbd);border-radius:5px;background:var(--bbg);color:#1a4a8a;font-family:inherit;min-width:110px}
-input.csedit:focus{outline:none}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
-.stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);padding:10px;text-align:center}
-.statn{font-size:24px;font-weight:700}
-.statl{font-size:11px;color:var(--muted);margin-top:1px}
-.twrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--rs)}
-table.ot{width:100%;border-collapse:collapse;font-size:12px;min-width:800px}
-table.ot thead{background:var(--bg)}
-table.ot th{padding:7px 9px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap}
-table.ot td{padding:6px 9px;border-bottom:1px solid var(--border);vertical-align:middle}
-table.ot tbody tr:last-child td{border-bottom:none}
-table.ot tbody tr:hover{background:#fafaf8}
-table.ot tbody tr.skiprow{opacity:.45}
-.tag{display:inline-flex;align-items:center;font-size:11px;padding:2px 7px;border-radius:9px;font-weight:700;white-space:nowrap}
-.tag.ot{background:var(--gbg);color:var(--green);border:1px solid var(--gbd)}
-.tag.skip{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
-.tag.nf{background:var(--abg);color:var(--amber);border:1px solid var(--abd)}
-.tag.nhb{background:#fffde7;color:#7a6000;border:1px solid #f0d840}
-.tag.crf{background:var(--bbg);color:var(--blue);border:1px solid var(--bbd)}
-.noteinp{width:100%;font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);font-family:inherit}
-.noteinp:focus{outline:none;border-color:var(--text)}
-.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-#overlay{display:none;position:fixed;inset:0;background:rgba(245,244,240,.9);z-index:200;align-items:center;justify-content:center}
-#overlay.show{display:flex}
-.lb{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px 40px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.08)}
-.bspin{width:36px;height:36px;border:3px solid var(--bmed);border-top-color:var(--text);border-radius:50%;animation:spin .65s linear infinite;margin:0 auto 11px}
-.lb p{font-size:14px;font-weight:600}
-.lb .lsub{font-size:12px;color:var(--muted);margin-top:3px}
-@media(max-width:640px){.ugrid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
-
-.modebar{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
-.modebtn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--rs);border:1px solid var(--bmed);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit;cursor:pointer;font-weight:600}
-.modebtn.active{background:var(--text);color:#fff;border-color:var(--text)}
-#ppMode,#coMode{display:none}
-.excel-preview{border:1px solid #b7b7b7;border-radius:var(--rs);overflow:auto;background:#fff;margin-bottom:12px}
-.excel-preview table{border-collapse:collapse;font-size:12px;min-width:520px;background:#fff}
-.excel-preview th,.excel-preview td{border:1px solid #d9d9d9;padding:5px 8px;height:24px;vertical-align:middle;color:#1a1a18;background:#fff;font-weight:400;text-align:left}
-.excel-preview thead th{background:#f2f2f2;font-weight:700}
-.excel-preview .xl-colhdr{background:#f3f3f3;color:#444;text-align:center;font-weight:600;padding:3px 8px;height:22px}
-.excel-preview .xl-rowhdr{background:#f3f3f3;color:#444;text-align:center;width:42px;font-weight:600;padding:3px 6px}
-.excel-preview .xl-id{width:14ch}
-.excel-preview .xl-name{width:34ch}
-.excel-preview .xl-team{width:14ch}
-</style>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}:root{--bg:#f5f4f0;--surface:#fff;--border:#e2dfd8;--bmed:#c5c0b8;--text:#1a1a18;--muted:#6b6860;--faint:#aaa8a2;--green:#1a7a4a;--gbg:#eaf5ef;--gbd:#b6dfc7;--amber:#8a5a00;--abg:#fef8e7;--abd:#f0d080;--red:#a02020;--rbg:#fdf0f0;--rbd:#f0c0c0;--blue:#1a4a8a;--bbg:#eef4fd;--bbd:#b8d0f5;--r:10px;--rs:6px;}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}.app{max-width:1200px;margin:0 auto;padding:24px 16px 60px;}.main-left{width:100%;}h1{font-size:20px;font-weight:700;letter-spacing:-.3px;margin-bottom:3px}.sub{font-size:13px;color:var(--muted);margin-bottom:18px}.steps{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:16px;flex-wrap:wrap}.step{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--faint);padding:2px 6px 2px 0}.step.active{color:var(--text);font-weight:700}.step.done{color:var(--green)}.snum{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--bmed);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}.step.active .snum{background:var(--text);color:#fff;border-color:var(--text)}.step.done .snum{background:var(--gbg);color:var(--green);border-color:var(--gbd)}.sarr{color:var(--bmed);font-size:13px;margin:0 1px}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:12px}.ctitle{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}.ctag{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg);border:1px solid var(--border);color:var(--muted)}.ugrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.uz{display:block;border:1.5px dashed var(--bmed);border-radius:var(--rs);padding:16px 10px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}.uz:hover{border-color:var(--text);background:var(--bg)}.uz.done{border-style:solid;border-color:var(--gbd);background:var(--gbg)}.uz input[type="file"]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}.uzi{font-size:22px;margin-bottom:4px}.uzl{font-size:13px;font-weight:600}.uzs{font-size:11px;color:var(--muted);margin-top:2px}.uzf{font-size:11px;color:var(--green);margin-top:4px;font-weight:600;word-break:break-all;line-height:1.3}.uzth{max-width:100%;max-height:70px;border-radius:4px;margin-top:5px;object-fit:cover}.apibox{background:var(--abg);border:1px solid var(--abd);border-radius:var(--rs);padding:11px 13px;margin-bottom:12px}.apibox label{display:block;font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}.apibox input,.apibox select{width:100%;font-size:13px;padding:6px 9px;border-radius:var(--rs);border:1px solid var(--abd);background:#fff;color:var(--text);font-family:monospace}.apigrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}@media(max-width:640px){.apigrid{grid-template-columns:1fr}}.apihint{font-size:11px;color:var(--amber);margin-top:4px;line-height:1.5}.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rs);border:1px solid var(--bmed);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s;font-weight:500;white-space:nowrap}.btn:hover{background:var(--bg)}.btn:active{transform:scale(.98)}.btn.primary{background:var(--text);color:#fff;border-color:var(--text)}.btn.primary:hover{opacity:.85}.btn.preview{background:var(--bbg);color:var(--blue);border-color:var(--bbd);font-weight:700}.btn.preview:hover{background:#dfeafb;border-color:#8fb2e8}.btn.preview:disabled{background:var(--bbg);color:var(--blue);border-color:var(--bbd)}.btn:disabled{opacity:.35;cursor:not-allowed;pointer-events:none}.bgrp{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}.alert{font-size:12px;padding:8px 11px;border-radius:var(--rs);margin:7px 0;line-height:1.5}.alert.err{background:var(--rbg);color:var(--red);border:1px solid var(--rbd)}.alert.ok{background:var(--gbg);color:var(--green);border:1px solid var(--gbd)}.alert.warn{background:var(--abg);color:var(--amber);border:1px solid var(--abd)}.sbox{position:relative;margin-bottom:8px}.sbox input{width:100%;font-size:13px;padding:7px 11px 7px 30px;border-radius:var(--rs);border:1px solid var(--bmed);background:var(--surface);color:var(--text);font-family:inherit}.sbox input:focus{outline:none;border-color:var(--text)}.sbox::before{content:'\2315';position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--faint);font-size:15px;pointer-events:none}.holdbox{background:#f0f4ff;border:1px solid var(--bbd);border-radius:var(--rs);padding:12px;margin-bottom:12px}.holdbox label{display:block;font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}.holdbox textarea{width:100%;font-size:12px;padding:7px 9px;border-radius:var(--rs);border:1px solid var(--bbd);background:#fff;color:var(--text);font-family:inherit;resize:vertical;outline:none}.holdbox textarea:focus{border-color:var(--blue)}.holdbox .hint{font-size:11px;color:var(--blue);margin-top:5px;opacity:.8}.ftbl{width:100%;border-collapse:collapse;font-size:12px}.ftbl th{padding:6px 9px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap}.ftbl td{padding:6px 9px;border-bottom:1px solid var(--border);vertical-align:top}.ftbl tbody tr:last-child td{border-bottom:none}.ftbl tbody tr:hover{background:#fafaf8}.cstags{display:flex;flex-wrap:wrap;gap:3px;align-items:center}.cstag{display:inline-flex;align-items:center;gap:2px;font-size:11px;padding:2px 6px;border-radius:7px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:default}.cstag.pb{border-color:#c0d8f0;background:#eef4fd;color:#1a4a8a}.cstag.gs{border-color:#c8e8c8;background:#eaf5ea;color:#1a6a2a}.cstag.rs{border-color:var(--abd);background:var(--abg);color:var(--amber)}.cstag .rm{background:none;border:none;cursor:pointer;color:inherit;opacity:.5;font-size:11px;line-height:1;padding:0 0 0 2px;font-family:inherit}.cstag .rm:hover{opacity:1}.addcs{font-size:11px;padding:2px 6px;border-radius:7px;border:1px dashed var(--bmed);background:none;color:var(--muted);cursor:pointer;font-family:inherit}.addcs:hover{border-color:var(--text);color:var(--text)}.delrow{background:none;border:none;cursor:pointer;color:var(--faint);font-size:14px;padding:2px;border-radius:4px}.delrow:hover{background:var(--rbg);color:var(--red)}input.inl{font-size:12px;padding:3px 6px;border:1px solid var(--bmed);border-radius:4px;background:var(--surface);color:var(--text);font-family:inherit}input.inl:focus{outline:none;border-color:var(--text)}input.csedit{font-size:11px;padding:3px 6px;border:1px solid var(--bbd);border-radius:5px;background:var(--bbg);color:#1a4a8a;font-family:inherit;min-width:110px}input.csedit:focus{outline:none}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}.stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);padding:10px;text-align:center}.statn{font-size:24px;font-weight:700}.statl{font-size:11px;color:var(--muted);margin-top:1px}.twrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--rs)}table.ot{width:100%;border-collapse:collapse;font-size:12px;min-width:800px}table.ot thead{background:var(--bg)}table.ot th{padding:7px 9px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap}table.ot td{padding:6px 9px;border-bottom:1px solid var(--border);vertical-align:middle}table.ot tbody tr:last-child td{border-bottom:none}table.ot tbody tr:hover{background:#fafaf8}table.ot tbody tr.skiprow{opacity:.45}.tag{display:inline-flex;align-items:center;font-size:11px;padding:2px 7px;border-radius:9px;font-weight:700;white-space:nowrap}.tag.ot{background:var(--gbg);color:var(--green);border:1px solid var(--gbd)}.tag.skip{background:var(--bg);color:var(--muted);border:1px solid var(--border)}.tag.nf{background:var(--abg);color:var(--amber);border:1px solid var(--abd)}.tag.nhb{background:#fffde7;color:#7a6000;border:1px solid #f0d840}.tag.crf{background:var(--bbg);color:var(--blue);border:1px solid var(--bbd)}.noteinp{width:100%;font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);font-family:inherit}.noteinp:focus{outline:none;border-color:var(--text)}.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}#overlay{display:none;position:fixed;inset:0;background:rgba(245,244,240,.9);z-index:200;align-items:center;justify-content:center}#overlay.show{display:flex}.lb{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px 40px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.08)}.bspin{width:36px;height:36px;border:3px solid var(--bmed);border-top-color:var(--text);border-radius:50%;animation:spin .65s linear infinite;margin:0 auto 11px}.lb p{font-size:14px;font-weight:600}.lb .lsub{font-size:12px;color:var(--muted);margin-top:3px}@media(max-width:640px){.ugrid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+.modebar{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}.modebtn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--rs);border:1px solid var(--bmed);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit;cursor:pointer;font-weight:600}.modebtn.active{background:var(--text);color:#fff;border-color:var(--text)}#ppMode,#coMode{display:none}.excel-preview{border:1px solid #b7b7b7;border-radius:var(--rs);overflow:auto;background:#fff;margin-bottom:12px}.excel-preview table{border-collapse:collapse;font-size:12px;min-width:520px;background:#fff}.excel-preview th,.excel-preview td{border:1px solid #d9d9d9;padding:5px 8px;height:24px;vertical-align:middle;color:#1a1a18;background:#fff;font-weight:400;text-align:left}.excel-preview thead th{background:#f2f2f2;font-weight:700}.excel-preview .xl-colhdr{background:#f3f3f3;color:#444;text-align:center;font-weight:600;padding:3px 8px;height:22px}.excel-preview .xl-rowhdr{background:#f3f3f3;color:#444;text-align:center;width:42px;font-weight:600;padding:3px 6px}.excel-preview .xl-id{width:14ch}.excel-preview .xl-name{width:34ch}.excel-preview .xl-team{width:14ch}</style>
 </head>
 <body>
 <div id="overlay">
@@ -155,6 +26,7 @@ table.ot tbody tr.skiprow{opacity:.45}
     <button type="button" class="modebtn" id="modeCOBtn" onclick="switchTool('co')">Confirm Off OT</button>
     <button type="button" class="modebtn" id="modePPBtn" onclick="switchTool('pp')">PrePlanned OT</button>
   </div>
+  
   <div id="otMode">
   <div class="steps">
     <div class="step active" id="s1"><div class="snum">1</div>Upload &amp; API</div>
@@ -180,7 +52,8 @@ table.ot tbody tr.skiprow{opacity:.45}
             <option value="gemini-1.5-pro-latest">Primary: Gemini 1.5 Pro</option>
           </select>
           <select id="modelFallback" onchange="chkReady()">
-            <option value="google/gemini-2.0-flash-lite-preview-02-05" selected>Fallback: Gemini 2.0 Flash Lite (Ultra-Stable)</option>
+            <option value="google/gemini-2.5-flash" selected>Fallback: Gemini 2.5 Flash</option>
+            <option value="google/gemini-2.0-flash-lite-preview-02-05">Fallback: Gemini 2.0 Flash Lite (Ultra-Stable)</option>
             <option value="qwen/qwen-2.5-vl-72b-instruct">Fallback: Qwen 2.5 VL 72B (Stable Node)</option>
             <option value="meta-llama/llama-3.2-11b-vision-instruct">Fallback: Llama 3.2 Vision (Stable Node)</option>
           </select>
@@ -221,6 +94,7 @@ table.ot tbody tr.skiprow{opacity:.45}
           <img id="thumb" class="uzth" style="display:none">
         </label>
       </div>
+
       <div class="holdbox">
         <label>Paste holdback / CRF / RS&amp;ODA flights here</label>
         <textarea id="manualText" rows="4" placeholder="Paste your supervisor message here, e.g.:&#10;1. Sathya - SQ164 F35 0825hrs&#10;Shaila/Liang/Devendran - E28 SQ956 0905hrs"></textarea>
@@ -291,19 +165,19 @@ table.ot tbody tr.skiprow{opacity:.45}
         </table>
       </div>
       <div class="bgrp" style="margin-top:12px">
-        <button class="btn preview" onclick="previewHoldbackXLSX()">&#x1F441;&#xFE0F; Preview Excel table at bottom</button>
-        <button class="btn" id="copyPreviewBtn" onclick="copyHoldbackPreview()" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Copy Preview Data</button>
+        <button class="btn" id="copyPreviewBtn" onclick="copyHoldbackPreview()" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Preview & Copy Data</button>
         <button class="btn" id="togSkipBtn" onclick="togSkipped()">Show skipped</button>
         <button class="btn" onclick="goPanel(2)">&#x2039; Back to flights</button>
       </div>
       <div id="otExcelPreview" style="display:none;margin-top:12px"></div>
     </div>
   </div>
-</div>
+  </div>
+
   <div id="coMode">
     <div class="card">
       <div class="ctitle">Confirm Off OT</div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Analyse rostered <b>2</b> in blue and <b>OT2</b> in green. Default source is <b>Roster</b> tab, column <b>E</b>. You can switch to <b>Confirm Off OT</b> tab if needed.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Analyse rostered <b>2</b> in blue and <b>OT2</b> in green or purple. Default source is <b>Roster</b> tab, column <b>E</b>. You can switch to <b>Confirm Off OT</b> tab if needed.</p>
       <div class="apigrid" style="margin-bottom:12px">
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Data source</label>
@@ -326,18 +200,18 @@ table.ot tbody tr.skiprow{opacity:.45}
       <div class="alert warn">Priority set to <b>Roster</b>. For Roster source, Confirm Off OT checks <b>column E only</b>. For Confirm Off OT source, it checks all roster/date columns after ID, Name and Team.</div>
       <div class="bgrp">
         <button class="btn primary" onclick="runRosterModeAnalysis('co')">Analyse Confirm Off OT</button>
-        <button class="btn preview" id="coPreviewBtn" onclick="previewRosterModeXlsx('co')" disabled>&#x1F441;&#xFE0F; Preview Excel table at bottom</button>
-        <button class="btn" id="coCopyBtn" onclick="copyRosterModePreview('co')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Copy Preview Data</button>
+        <button class="btn" id="coCopyBtn" onclick="copyRosterModePreview('co')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Preview & Copy Data</button>
       </div>
       <div id="coMsg"></div>
       <div id="coReview" style="display:none;margin-top:12px"></div>
       <div id="coExcelPreview" style="display:none;margin-top:12px"></div>
     </div>
   </div>
+
   <div id="ppMode">
     <div class="card">
       <div class="ctitle">PrePlanned OT</div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Analyse rostered <b>2</b> in blue and <b>OT2</b> in green. Default source is <b>Roster</b> tab, column <b>F</b>. You can switch to <b>PrePlanned OT</b> tab if needed.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Analyse rostered <b>2</b> in blue and <b>OT2</b> in green or purple. Default source is <b>Roster</b> tab, column <b>F</b>. You can switch to <b>PrePlanned OT</b> tab if needed.</p>
       <div class="apigrid" style="margin-bottom:12px">
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Data source</label>
@@ -360,8 +234,7 @@ table.ot tbody tr.skiprow{opacity:.45}
       <div class="alert warn">Priority set to <b>Roster</b>. For Roster source, PrePlanned OT checks <b>column F only</b>. For PrePlanned OT source, it checks all roster/date columns after ID, Name and Team.</div>
       <div class="bgrp">
         <button class="btn primary" onclick="runRosterModeAnalysis('pp')">Analyse PrePlanned OT</button>
-        <button class="btn preview" id="ppPreviewBtn" onclick="previewRosterModeXlsx('pp')" disabled>&#x1F441;&#xFE0F; Preview Excel table at bottom</button>
-        <button class="btn" id="ppCopyBtn" onclick="copyRosterModePreview('pp')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Copy Preview Data</button>
+        <button class="btn" id="ppCopyBtn" onclick="copyRosterModePreview('pp')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Preview & Copy Data</button>
       </div>
       <div id="ppMsg"></div>
       <div id="ppReview" style="display:none;margin-top:12px"></div>
@@ -389,7 +262,6 @@ function toggleMasterSource() {
 
 async function ensureGoogleSheetData() {
   if (masterData.rawGAS) return; 
-
   var urlInput = document.getElementById('mSheetLink').value.trim();
   if (!urlInput) throw new Error('Please paste a Google Sheet link in the Holdback OT tab setup.');
   
@@ -460,6 +332,7 @@ function rmExcelDate(serial){const n=Number(serial); if(!isFinite(n))return Stri
 function rmIsDate(v){const n=Number(v); return n>30000&&n<70000;}
 async function rmReadText(zip,path,opt=false){const f=zip.file(path); if(!f){if(opt)return ''; throw new Error('Missing '+path);} return await f.async('text');}
 async function rmShared(zip){const txt=await rmReadText(zip,'xl/sharedStrings.xml',true); if(!txt)return []; const doc=rmXmlParse(txt); return rmByTag(doc.documentElement,'si').map(si=>Array.from(si.getElementsByTagNameNS(XNS,'t')).map(t=>t.textContent||'').join(''));}
+
 const RM_INDEXED_COLORS=['000000','FFFFFF','FF0000','00FF00','0000FF','FFFF00','FF00FF','00FFFF','000000','FFFFFF','FF0000','00FF00','0000FF','FFFF00','FF00FF','00FFFF','800000','008000','000080','808000','800080','008080','C0C0C0','808080','9999FF','993366','FFFFCC','CCFFFF','660066','FF8080','0066CC','CCCCFF','000080','FF00FF','FFFF00','00FFFF','800080','800000','008080','0000FF','00CCFF','CCFFFF','CCFFCC','FFFF99','99CCFF','FF99CC','CC99FF','FFCC99','3366FF','33CCCC','99CC00','FFCC00','FF9900','FF6600','666699','969696','003366','339966','003300','333300','993300','993366','333399','333333'];
 function rmRosterVal(v){return String(v??'').trim().toUpperCase().replace(/\.0+$/,'');}
 function rmThemeRgb(theme,tint){const base=['FFFFFF','000000','EEECE1','1F497D','4F81BD','C0504D','9BBB59','8064A2','4BACC6','F79646'][Number(theme)]||''; if(!base)return ''; let r=parseInt(base.slice(0,2),16),g=parseInt(base.slice(2,4),16),b=parseInt(base.slice(4,6),16),t=Number(tint||0); const adj=x=>Math.round(t<0?x*(1+t):x+(255-x)*t); if(t){r=adj(r);g=adj(g);b=adj(b);} return [r,g,b].map(x=>Math.max(0,Math.min(255,x)).toString(16).padStart(2,'0')).join('').toUpperCase();}
@@ -470,6 +343,7 @@ function rmClassify(rgb){
   const r=parseInt(rgb.slice(0,2),16), g=parseInt(rgb.slice(2,4),16), b=parseInt(rgb.slice(4,6),16);
   if(g>=145 && g>=r+25 && g>=b+15)return 'green';
   if(b>=145 && g>=110 && b>=r+8 && g>=r-25 && !(r>225&&g>225&&b>225))return 'blue';
+  if(r>g+5 && b>g+10 && r>130 && b>130)return 'purple';
   return 'other';
 }
 
@@ -482,7 +356,7 @@ function rmStyles(stylesXml){
     const ptype=pattern?pattern.getAttribute('patternType'):'';
     if(ptype && ptype!=='solid')return {rgb:'',cls:'none'};
     const fg=fill.getElementsByTagNameNS(XNS,'fgColor')[0]||fill.getElementsByTagNameNS(XNS,'bgColor')[0];
-    const rgb=rmColorFromEl(hexColor);
+    const rgb=rmColorFromEl(fg);
     return {rgb,cls:rmClassify(rgb)};
   });
   const cellXfsNode=rmByTag(doc.documentElement,'cellXfs')[0];
@@ -494,105 +368,109 @@ function rmValue(c,shared){const t=c.getAttribute('t'); const v=c.getElementsByT
 function rmFill(c,styles){const s=Number(c.getAttribute('s')||0); const fillId=styles.styleFills[s]??0; return styles.fillColors[fillId]||{rgb:'',cls:'none'};}
 function rmFindSheet(sheets, wanted){const uw=rmUpper(wanted).replace(/\s+/g,''); return sheets.find(s=>rmUpper(s.name)===rmUpper(wanted))||sheets.find(s=>rmUpper(s.name).replace(/\s+/g,'')===uw);}
 
-function gasAnalyseWorkbook(rawGas, mode, sourceSheet) {
-   var targetObj = null;
-   var sheetName = '';
-   var sUpper = sourceSheet.toUpperCase();
-   if(sUpper === 'ROSTER') { targetObj = rawGas.roster; sheetName = 'Roster'; }
-   else if(sUpper === 'CONFIRM OFF OT') { targetObj = rawGas.co; sheetName = 'Confirm Off OT'; }
-   else if(sUpper === 'PREPLANNED OT') { targetObj = rawGas.pp; sheetName = 'PrePlanned OT'; }
+function gasAnalyseWorkbook(rawGas, mode, sourceSheet) { 
+   var targetObj = null; 
+   var sheetName = ''; 
+   var sUpper = sourceSheet.toUpperCase(); 
+   if(sUpper === 'ROSTER') { targetObj = rawGas.roster; sheetName = 'Roster'; } 
+   else if(sUpper === 'CONFIRM OFF OT') { targetObj = rawGas.co; sheetName = 'Confirm Off OT'; } 
+   else if(sUpper === 'PREPLANNED OT') { targetObj = rawGas.pp; sheetName = 'PrePlanned OT'; } 
    
-   if(!targetObj || !targetObj.values) throw new Error('Tab "' + sourceSheet + '" not found in Google Sheet. Make sure you fetch it first.');
+   if(!targetObj || !targetObj.values) throw new Error('Tab "' + sourceSheet + '" not found in Google Sheet. Make sure you fetch it first.'); 
    
-   var rows = targetObj.values;
-   var bgs = targetObj.backgrounds;
+   var rows = targetObj.values; 
+   var bgs = targetObj.backgrounds; 
    
-   var headerRowIdx = -1;
-   var idCol = null, nameCol = null, teamCol = null;
-   for(var r=0; r<Math.min(rows.length, 30); r++) {
-       var found = {};
-       for(var c=0; c<Math.min(rows[r].length, 25); c++) {
-           var v = String(rows[r][c] || '').trim().toUpperCase();
-           if(v==='ID' || v==='SERVICE ID') found.id = c;
-           if(v==='NAME' || v==='OFFICER' || v==='OFFICER NAME') found.name = c;
-           if(v==='TEAM') found.team = c;
-       }
-       if(found.id !== undefined && found.name !== undefined && found.team !== undefined) {
-           headerRowIdx = r;
-           idCol = found.id;
-           nameCol = found.name;
-           teamCol = found.team;
-           break;
-       }
-   }
-   if(headerRowIdx === -1) throw new Error('Cannot identify header row with ID, Name and Team.');
+   var headerRowIdx = -1; 
+   var idCol = null, nameCol = null, teamCol = null; 
+   for(var r=0; r<Math.min(rows.length, 30); r++) { 
+       var found = {}; 
+       for(var c=0; c<Math.min(rows[r].length, 25); c++) { 
+           var v = String(rows[r][c] || '').trim().toUpperCase(); 
+           if(v==='ID' || v==='SERVICE ID') found.id = c; 
+           if(v==='NAME' || v==='OFFICER' || v==='OFFICER NAME') found.name = c; 
+           if(v==='TEAM') found.team = c; 
+       } 
+       if(found.id !== undefined && found.name !== undefined && found.team !== undefined) { 
+           headerRowIdx = r; 
+           idCol = found.id; 
+           nameCol = found.name; 
+           teamCol = found.team; 
+           break; 
+       } 
+   } 
+   if(headerRowIdx === -1) throw new Error('Cannot identify header row with ID, Name and Team.'); 
    
-   var sourceIsRoster = (sUpper === 'ROSTER');
-   var scanCols = [];
-   if (sourceIsRoster) {
-       scanCols = [mode === 'pp' ? 5 : 4]; 
-   } else {
-       var start = Math.max(idCol, nameCol, teamCol) + 1;
-       for(var c=start; c<rows[headerRowIdx].length; c++) scanCols.push(c);
-   }
+   var sourceIsRoster = (sUpper === 'ROSTER'); 
+   var scanCols = []; 
+   if (sourceIsRoster) { 
+       scanCols = [mode === 'pp' ? 5 : 4];  
+   } else { 
+       var start = Math.max(idCol, nameCol, teamCol) + 1; 
+       for(var c=start; c<rows[headerRowIdx].length; c++) scanCols.push(c); 
+   } 
    
-   var out = [];
-   var uniqueBlueFills = new Set();
+   var out = []; 
+   var uniqueBlueFills = new Set(); 
    var uniqueGreenFills = new Set();
+   var uniquePurpleFills = new Set();
 
-   for(var r = headerRowIdx + 1; r < rows.length; r++) {
-       var id = rmNorm(rows[r][idCol]);
-       var name = rmCleanName(rows[r][nameCol]);
-       var team = rmNorm(rows[r][teamCol]);
-       if(!id && !name && !team) continue;
+   for(var r = headerRowIdx + 1; r < rows.length; r++) { 
+       var id = rmNorm(rows[r][idCol]); 
+       var name = rmCleanName(rows[r][nameCol]); 
+       var team = rmNorm(rows[r][teamCol]); 
+       if(!id && !name && !team) continue; 
        
-       for(var sc=0; sc<scanCols.length; sc++) {
-           var c = scanCols[sc];
-           var rawVal = rows[r][c];
-           var val = rmRosterVal(rawVal);
-           if(!val) continue;
+       for(var sc=0; sc<scanCols.length; sc++) { 
+           var c = scanCols[sc]; 
+           var rawVal = rows[r][c]; 
+           var val = rmRosterVal(rawVal); 
+           if(!val) continue; 
            
-           var hexColor = String(bgs[r][c] || '').toLowerCase();
+           var hexColor = String(bgs[r][c] || '').toLowerCase(); 
            if(hexColor.startsWith('#')) hexColor = hexColor.substring(1); 
+            
+           var fillCls = rmClassify(hexColor); 
            
-           var fillCls = rmClassify(hexColor);
+           var matchType = ''; 
+           if(val === '2' && fillCls === 'blue') matchType = 'Rostered 2 in blue'; 
+           if(val === 'OT2' && fillCls === 'green') matchType = 'Rostered OT2 in green'; 
+           if(val === 'OT2' && fillCls === 'purple') matchType = 'Rostered OT2 in purple';
            
-           var matchType = '';
-           if(val === '2' && fillCls === 'blue') matchType = 'Rostered 2 in blue';
-           if(val === 'OT2' && fillCls === 'green') matchType = 'Rostered OT2 in green';
-           
-           if(matchType) {
-               if(fillCls==='blue') uniqueBlueFills.add(hexColor);
-               if(fillCls==='green') uniqueGreenFills.add(hexColor);
+           if(matchType) { 
+               if(fillCls==='blue') uniqueBlueFills.add(hexColor); 
+               if(fillCls==='green') uniqueGreenFills.add(hexColor); 
+               if(fillCls==='purple') uniquePurpleFills.add(hexColor);
                
-               var headerVal = rows[headerRowIdx][c];
-               var rDate = '';
-               if (Object.prototype.toString.call(headerVal) === '[object Date]') {
-                   rDate = headerVal.toISOString().slice(0,10);
-               } else {
-                   rDate = String(headerVal);
-               }
+               var headerVal = rows[headerRowIdx][c]; 
+               var rDate = ''; 
+               if (Object.prototype.toString.call(headerVal) === '[object Date]') { 
+                   rDate = headerVal.toISOString().slice(0,10); 
+               } else { 
+                   rDate = String(headerVal); 
+               } 
                
-               out.push({
-                   id: id, name: name, team: team, rosterDate: rDate,
-                   cell: rmNumToCol(c + 1) + (r + 1), value: rawVal, detectedColor: fillCls,
-                   fillRgb: hexColor, matchType: matchType
-               });
-           }
-       }
-   }
+               out.push({ 
+                   id: id, name: name, team: team, rosterDate: rDate, 
+                   cell: rmNumToCol(c + 1) + (r + 1), value: rawVal, detectedColor: fillCls, 
+                   fillRgb: hexColor, matchType: matchType 
+               }); 
+           } 
+       } 
+   } 
    
-   return {
-       results: out,
-       info: {
-           fileName: 'Loaded from Google Sheets',
-           sheetName: sheetName,
-           headerRow: headerRowIdx + 1,
-           scan: sourceIsRoster ? (mode === 'pp' ? 'Column F' : 'Column E') : 'All roster columns after Team',
-           blueFills: Array.from(uniqueBlueFills),
-           greenFills: Array.from(uniqueGreenFills)
-       }
-   };
+   return { 
+       results: out, 
+       info: { 
+           fileName: 'Loaded from Google Sheets', 
+           sheetName: sheetName, 
+           headerRow: headerRowIdx + 1, 
+           scan: sourceIsRoster ? (mode === 'pp' ? 'Column F' : 'Column E') : 'All roster columns after Team', 
+           blueFills: Array.from(uniqueBlueFills), 
+           greenFills: Array.from(uniqueGreenFills),
+           purpleFills: Array.from(uniquePurpleFills)
+       } 
+   }; 
 }
 
 async function rmAnalyseWorkbook(file, mode, sourceSheet){
@@ -616,9 +494,9 @@ async function rmAnalyseWorkbook(file, mode, sourceSheet){
   for(let r=headerRow+1;r<=maxRow;r++){
     const id=rmNorm(grid.get(rmNumToCol(idCol)+r)?.val), name=rmCleanName(grid.get(rmNumToCol(nameCol)+r)?.val), team=rmNorm(grid.get(rmNumToCol(teamCol)+r)?.val);
     if(!id&&!name&&!team)continue;
-    for(const c of scanCols){const cell=grid.get(rmNumToCol(c)+r); const val=rmRosterVal(cell?.val); if(!cell||!val)continue; const fillCls=cell.fill.cls; let matchType=''; if(val==='2'&&fillCls==='blue')matchType='Rostered 2 in blue'; if(val==='OT2'&&fillCls==='green')matchType='Rostered OT2 in green'; if(matchType){const headerVal=grid.get(rmNumToCol(c)+headerRow)?.val||rmNumToCol(c); out.push({id,name,team,rosterDate:rmIsDate(headerVal)?rmExcelDate(headerVal):String(headerVal),cell:cell.ref,value:cell.val,detectedColor:fillCls,fillRgb:cell.fill.rgb,matchType});}}
+    for(const c of scanCols){const cell=grid.get(rmNumToCol(c)+r); const val=rmRosterVal(cell?.val); if(!cell||!val)continue; const fillCls=cell.fill.cls; let matchType=''; if(val==='2'&&fillCls==='blue')matchType='Rostered 2 in blue'; if(val==='OT2'&&fillCls==='green')matchType='Rostered OT2 in green'; if(val==='OT2'&&fillCls==='purple')matchType='Rostered OT2 in purple'; if(matchType){const headerVal=grid.get(rmNumToCol(c)+headerRow)?.val||rmNumToCol(c); out.push({id,name,team,rosterDate:rmIsDate(headerVal)?rmExcelDate(headerVal):String(headerVal),cell:cell.ref,value:cell.val,detectedColor:fillCls,fillRgb:cell.fill.rgb,matchType});}}
   }
-  return {results:out, info:{fileName:file.name,sheetName:sheet.name,headerRow,scan:sourceIsRoster?(mode==='pp'?'Column F':'Column E'):'All roster columns after Team', blueFills:styles.fillColors.filter(f=>f.cls==='blue').map(f=>f.rgb).filter(Boolean), greenFills:styles.fillColors.filter(f=>f.cls==='green').map(f=>f.rgb).filter(Boolean)}};
+  return {results:out, info:{fileName:file.name,sheetName:sheet.name,headerRow,scan:sourceIsRoster?(mode==='pp'?'Column F':'Column E'):'All roster columns after Team', blueFills:styles.fillColors.filter(f=>f.cls==='blue').map(f=>f.rgb).filter(Boolean), greenFills:styles.fillColors.filter(f=>f.cls==='green').map(f=>f.rgb).filter(Boolean), purpleFills:styles.fillColors.filter(f=>f.cls==='purple').map(f=>f.rgb).filter(Boolean)}};
 }
 
 function rmUniqueExportRows(rows){
@@ -673,10 +551,10 @@ function rmBuildRosterModeReview(mode,data){
     <div class="alert ok">
       <b>Workbook:</b> ${rmEsc(data.info.fileName)}<br>
       <b>Sheet:</b> ${rmEsc(data.info.sheetName)} | <b>Header row:</b> ${data.info.headerRow} | <b>Scan:</b> ${rmEsc(data.info.scan)}<br>
-      <b>Detected colour:</b> Blue ${rmEsc(data.info.blueFills.join(', ')||'-')} | Green ${rmEsc(data.info.greenFills.join(', ')||'-')}
+      <b>Detected colour:</b> Blue ${rmEsc(data.info.blueFills.join(', ')||'-')} | Green ${rmEsc(data.info.greenFills.join(', ')||'-')} | Purple ${rmEsc(data.info.purpleFills.join(', ')||'-')}
     </div>
     <div class="alert warn">
-      Use <b>Preview Excel table at bottom</b> to check the exact preview table before copying.
+      The preview table below represents the exact data copied to your clipboard.
     </div>
     <div class="ctitle" style="margin-top:12px">Detection details <span class="ctag">${data.results.length} match(es)</span></div>
     <div class="twrap">
@@ -692,15 +570,15 @@ async function runRosterModeAnalysis(mode){
   var inputMode = document.getElementById(mode+'InputMode').value; 
   var msg = document.getElementById(mode+'Msg');
   var review = document.getElementById(mode+'Review');
-  var previewBtn = document.getElementById(mode+'PreviewBtn');
   var preview = document.getElementById(mode+'ExcelPreview');
   
-  msg.innerHTML=''; review.style.display='none'; if(previewBtn)previewBtn.disabled=true; if(preview){preview.innerHTML=''; preview.style.display='none';}
+  msg.innerHTML=''; review.style.display='none'; 
+  if(preview){preview.innerHTML=''; preview.style.display='none';}
   ROSTER_MODE_STATE[mode].results=[];
   
   try{
     var data;
-    if(inputMode === 'master') {
+    if(inputMode === 'master') { 
        msg.innerHTML='<div class="alert warn">Fetching and Analysing Google Sheet data...</div>';
        setLoading(true, 'Fetching Master Google Sheet...');
        await ensureGoogleSheetData();
@@ -716,9 +594,11 @@ async function runRosterModeAnalysis(mode){
     ROSTER_MODE_STATE[mode].results=data.results;
     ROSTER_MODE_STATE[mode].info=data.info;
     const exportRows=rmUniqueExportRows(data.results);
-    if(previewBtn)previewBtn.disabled=exportRows.length===0;
-    var copyBtn=document.getElementById(mode+'CopyBtn'); if(copyBtn)copyBtn.disabled=exportRows.length===0;
-    msg.innerHTML='<div class="alert ok">Done. '+data.results.length+' matches found. Preview table has '+exportRows.length+' unique officer row(s). Click Preview Excel table at bottom to check before copying.</div>';
+    
+    var copyBtn=document.getElementById(mode+'CopyBtn'); 
+    if(copyBtn) copyBtn.disabled = exportRows.length === 0;
+    
+    msg.innerHTML='<div class="alert ok">Done. '+data.results.length+' matches found. Preview table has '+exportRows.length+' unique officer row(s). Click Preview & Copy to proceed.</div>';
     review.innerHTML=rmBuildRosterModeReview(mode,data);
     review.style.display='block';
   }catch(e){
@@ -734,7 +614,7 @@ function previewRosterModeXlsx(mode){
   const exportRows=rmUniqueExportRows(st.results);
   target.innerHTML=`
     <div class="ctitle">Excel table preview <span class="ctag">${rmEsc(st.title)}</span></div>
-    <div class="alert warn">This is the exact table that will be copied.</div>
+    <div class="alert warn">This is the exact table that was copied.</div>
     ${rmBuildExcelLikePreview(st.results)}
   `;
   target.style.display='block';
@@ -789,6 +669,7 @@ function loadMaster(inp){
       masterData.roster=parseRoster(wb.Sheets[rName]);
       masterData.kah=kName?parseKAH(wb.Sheets[kName]):{};
       masterData.rawGAS=null; 
+      
       if(aName){
         var ar=XLSX.utils.sheet_to_json(wb.Sheets[aName],{header:1,defval:''});
         for(var i=0;i<ar.length;i++)for(var j=0;j<ar[i].length;j++){var cv=String(ar[i][j]).trim();if(cv.length>10){
@@ -894,7 +775,6 @@ function parseGrouping(ws){
 
     var colC = String(row[2]||'').trim().toUpperCase();
     if(colC === 'TEAM CALL SIGN') currentCallsignL = String(row[3]||'').trim(); 
-
     var colG = String(row[6]||'').trim().toUpperCase();
     if(colG === 'TEAM CALL SIGN') currentCallsignR = String(row[7]||'').trim(); 
 
@@ -955,7 +835,7 @@ function parseRoster(ws, isFromGAS){
     var statusRaw=String(r[statusCol]!==undefined?r[statusCol]:'').trim();
     
     var isNHB = false;
-    if (isFromGAS) {
+    if (isFromGAS) { 
        var bgColor = String(bgs[ri][statusCol] || '').toLowerCase();
        isNHB = (bgColor === '#ffff00' || bgColor === '#ffffff00');
     } else {
@@ -1340,10 +1220,11 @@ function buildOT(){
   rosterList.forEach(function(ro){
     var id=ro.id,name=ro.name,team=ro.team;
     var statusRaw=ro.status,isNHB=ro.isNHB;
-    var claimOT=false,skipReason='';
+    var claimOT=false,skipReason='',shiftType='regular';
     if(String(statusRaw)==='2'&&!isNHB)claimOT=true;
     else if(/OT2/i.test(String(statusRaw))&&!isNHB)claimOT=true;
-    else if((String(statusRaw)==='2'||/OT2/i.test(String(statusRaw)))&&isNHB)skipReason='NHB';
+    else if(String(statusRaw)==='2200'&&!isNHB){ claimOT=true; shiftType='2200'; }
+    else if((String(statusRaw)==='2'||/OT2/i.test(String(statusRaw))||String(statusRaw)==='2200')&&isNHB)skipReason='NHB';
     else skipReason=String(statusRaw)||'blank';
 
     var flight='',gate='',etd='',ccRole='',rem='';
@@ -1386,12 +1267,20 @@ function buildOT(){
     }
 
     _otList.push({
-      id:id, name:name, team:team, status:statusRaw, isNHB:isNHB, 
+      id:id, name:name, team:team, status:statusRaw, isNHB:isNHB, shiftType:shiftType,
       claimOT:claimOT, skipReason:skipReason, flight:flight, gate:gate, 
       etd:etd, ccRole:ccRole, rem:rem, isCRF:isCRF, isKAH:isKAH,
       preservedNote: preservedNotes[id] 
     });
   });
+
+  var listRegular = [];
+  var list2200 = [];
+  _otList.forEach(function(o){
+     if(o.shiftType === '2200') list2200.push(o);
+     else listRegular.push(o);
+  });
+  _otList = listRegular.concat(list2200);
 
   renderOTTable(_otList);
   showMsg('p2msg','','');
@@ -1492,12 +1381,14 @@ function buildHoldbackExportRows(){
   });
   return rows;
 }
+
 function buildHoldbackPreviewRows(){
   var exportRows=buildHoldbackExportRows();
   return exportRows.map(function(row){
     return Array.isArray(row)?row.slice(1):row;
   });
 }
+
 function previewHoldbackXLSX(){
   var target=document.getElementById('otExcelPreview');
   if(!target)return;
@@ -1528,11 +1419,31 @@ function copyHoldbackPreview() {
   var rows = buildHoldbackPreviewRows();
   if (rows.length <= 1) { alert("No preview data to copy!"); return; }
   
-  var dataToCopy = rows.slice(1).map(function(r) {
-    return [r[0], r[1], r[2], '2000HRS', '0800HRS', '0800HRS', '0900HRS', '12', r[3]];
-  });
+  previewHoldbackXLSX();
   
-  copyDataToClipboard(dataToCopy, "Copied " + dataToCopy.length + " rows to clipboard! (Headers removed, 5 fixed columns added)");
+  setTimeout(function() {
+    var dataToCopy = [];
+    var has2200 = false;
+    var regularAdded = false;
+
+    for (var i = 1; i < rows.length; i++) {
+      var r = rows[i]; 
+      var otObj = _otList.find(function(o) { return o.id === r[0]; });
+      
+      if (otObj && otObj.shiftType === '2200') {
+        if (!has2200 && regularAdded) {
+          dataToCopy.push(['', '', '', '', '', '', '', '', '']); 
+          has2200 = true;
+        }
+        dataToCopy.push([r[0], r[1], r[2], '2200HRS', '0800HRS', '0800HRS', '0900HRS', '10', r[3]]);
+      } else {
+        dataToCopy.push([r[0], r[1], r[2], '2000HRS', '0800HRS', '0800HRS', '0900HRS', '12', r[3]]);
+        regularAdded = true;
+      }
+    }
+    
+    copyDataToClipboard(dataToCopy, "Copied data to clipboard! (Headers removed, custom columns added, 2200 separated)");
+  }, 50);
 }
 
 function copyRosterModePreview(mode) {
@@ -1541,9 +1452,12 @@ function copyRosterModePreview(mode) {
   var rows = rmExportBodyRows(st.results);
   if (rows.length <= 1) { alert("No preview data to copy!"); return; }
   
-  var dataToCopy = rows.slice(1);
+  previewRosterModeXlsx(mode);
   
-  copyDataToClipboard(dataToCopy, "Copied " + dataToCopy.length + " rows of " + st.title + " data to clipboard! (Headers removed)");
+  setTimeout(function() {
+    var dataToCopy = rows.slice(1);
+    copyDataToClipboard(dataToCopy, "Copied " + dataToCopy.length + " rows of " + st.title + " data to clipboard! (Headers removed)");
+  }, 50);
 }
 </script>
 </body>
