@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -180,7 +179,8 @@ table.ot tbody tr.skiprow{opacity:.45}
             <option value="gemini-1.5-pro-latest">Primary: Gemini 1.5 Pro</option>
           </select>
           <select id="modelFallback" onchange="chkReady()">
-            <option value="google/gemini-2.0-flash-lite-preview-02-05" selected>Fallback: Gemini 2.0 Flash Lite (Ultra-Stable)</option>
+            <option value="google/gemini-2.5-flash" selected>Fallback: Gemini 2.5 Flash</option>
+            <option value="google/gemini-2.0-flash-lite-preview-02-05">Fallback: Gemini 2.0 Flash Lite (Ultra-Stable)</option>
             <option value="qwen/qwen-2.5-vl-72b-instruct">Fallback: Qwen 2.5 VL 72B (Stable Node)</option>
             <option value="meta-llama/llama-3.2-11b-vision-instruct">Fallback: Llama 3.2 Vision (Stable Node)</option>
           </select>
@@ -291,8 +291,7 @@ table.ot tbody tr.skiprow{opacity:.45}
         </table>
       </div>
       <div class="bgrp" style="margin-top:12px">
-        <button class="btn preview" onclick="previewHoldbackXLSX()">&#x1F441;&#xFE0F; Preview Excel table at bottom</button>
-        <button class="btn" id="copyPreviewBtn" onclick="copyHoldbackPreview()" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Copy Preview Data</button>
+        <button class="btn" id="copyPreviewBtn" onclick="copyHoldbackPreview()" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Preview &amp; Copy Data</button>
         <button class="btn" id="togSkipBtn" onclick="togSkipped()">Show skipped</button>
         <button class="btn" onclick="goPanel(2)">&#x2039; Back to flights</button>
       </div>
@@ -303,7 +302,7 @@ table.ot tbody tr.skiprow{opacity:.45}
   <div id="coMode">
     <div class="card">
       <div class="ctitle">Confirm Off OT</div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Analyse rostered <b>2</b> in blue and <b>OT2</b> in green. Default source is <b>Roster</b> tab, column <b>E</b>. You can switch to <b>Confirm Off OT</b> tab if needed.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Analyse rostered <b>2</b> in blue and <b>OT2</b> in green/purple. Default source is <b>Roster</b> tab, column <b>E</b>. You can switch to <b>Confirm Off OT</b> tab if needed.</p>
       <div class="apigrid" style="margin-bottom:12px">
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Data source</label>
@@ -326,8 +325,7 @@ table.ot tbody tr.skiprow{opacity:.45}
       <div class="alert warn">Priority set to <b>Roster</b>. For Roster source, Confirm Off OT checks <b>column E only</b>. For Confirm Off OT source, it checks all roster/date columns after ID, Name and Team.</div>
       <div class="bgrp">
         <button class="btn primary" onclick="runRosterModeAnalysis('co')">Analyse Confirm Off OT</button>
-        <button class="btn preview" id="coPreviewBtn" onclick="previewRosterModeXlsx('co')" disabled>&#x1F441;&#xFE0F; Preview Excel table at bottom</button>
-        <button class="btn" id="coCopyBtn" onclick="copyRosterModePreview('co')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Copy Preview Data</button>
+        <button class="btn" id="coCopyBtn" onclick="copyRosterModePreview('co')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Preview &amp; Copy Data</button>
       </div>
       <div id="coMsg"></div>
       <div id="coReview" style="display:none;margin-top:12px"></div>
@@ -337,7 +335,7 @@ table.ot tbody tr.skiprow{opacity:.45}
   <div id="ppMode">
     <div class="card">
       <div class="ctitle">PrePlanned OT</div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Analyse rostered <b>2</b> in blue and <b>OT2</b> in green. Default source is <b>Roster</b> tab, column <b>F</b>. You can switch to <b>PrePlanned OT</b> tab if needed.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Analyse rostered <b>2</b> in blue and <b>OT2</b> in green/purple. Default source is <b>Roster</b> tab, column <b>F</b>. You can switch to <b>PrePlanned OT</b> tab if needed.</p>
       <div class="apigrid" style="margin-bottom:12px">
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Data source</label>
@@ -360,8 +358,7 @@ table.ot tbody tr.skiprow{opacity:.45}
       <div class="alert warn">Priority set to <b>Roster</b>. For Roster source, PrePlanned OT checks <b>column F only</b>. For PrePlanned OT source, it checks all roster/date columns after ID, Name and Team.</div>
       <div class="bgrp">
         <button class="btn primary" onclick="runRosterModeAnalysis('pp')">Analyse PrePlanned OT</button>
-        <button class="btn preview" id="ppPreviewBtn" onclick="previewRosterModeXlsx('pp')" disabled>&#x1F441;&#xFE0F; Preview Excel table at bottom</button>
-        <button class="btn" id="ppCopyBtn" onclick="copyRosterModePreview('pp')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Copy Preview Data</button>
+        <button class="btn" id="ppCopyBtn" onclick="copyRosterModePreview('pp')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Preview &amp; Copy Data</button>
       </div>
       <div id="ppMsg"></div>
       <div id="ppReview" style="display:none;margin-top:12px"></div>
@@ -470,6 +467,7 @@ function rmClassify(rgb){
   const r=parseInt(rgb.slice(0,2),16), g=parseInt(rgb.slice(2,4),16), b=parseInt(rgb.slice(4,6),16);
   if(g>=145 && g>=r+25 && g>=b+15)return 'green';
   if(b>=145 && g>=110 && b>=r+8 && g>=r-25 && !(r>225&&g>225&&b>225))return 'blue';
+  if(r>=g+10 && b>=g+10 && (r+b)>150)return 'purple';
   return 'other';
 }
 
@@ -482,7 +480,7 @@ function rmStyles(stylesXml){
     const ptype=pattern?pattern.getAttribute('patternType'):'';
     if(ptype && ptype!=='solid')return {rgb:'',cls:'none'};
     const fg=fill.getElementsByTagNameNS(XNS,'fgColor')[0]||fill.getElementsByTagNameNS(XNS,'bgColor')[0];
-    const rgb=rmColorFromEl(hexColor);
+    const rgb=rmColorFromEl(fg);
     return {rgb,cls:rmClassify(rgb)};
   });
   const cellXfsNode=rmByTag(doc.documentElement,'cellXfs')[0];
@@ -539,6 +537,7 @@ function gasAnalyseWorkbook(rawGas, mode, sourceSheet) {
    var out = [];
    var uniqueBlueFills = new Set();
    var uniqueGreenFills = new Set();
+   var uniquePurpleFills = new Set();
 
    for(var r = headerRowIdx + 1; r < rows.length; r++) {
        var id = rmNorm(rows[r][idCol]);
@@ -559,11 +558,12 @@ function gasAnalyseWorkbook(rawGas, mode, sourceSheet) {
            
            var matchType = '';
            if(val === '2' && fillCls === 'blue') matchType = 'Rostered 2 in blue';
-           if(val === 'OT2' && fillCls === 'green') matchType = 'Rostered OT2 in green';
+           if(val === 'OT2' && (fillCls === 'green' || fillCls === 'purple')) matchType = 'Rostered OT2 in ' + fillCls;
            
            if(matchType) {
                if(fillCls==='blue') uniqueBlueFills.add(hexColor);
                if(fillCls==='green') uniqueGreenFills.add(hexColor);
+               if(fillCls==='purple') uniquePurpleFills.add(hexColor);
                
                var headerVal = rows[headerRowIdx][c];
                var rDate = '';
@@ -590,7 +590,8 @@ function gasAnalyseWorkbook(rawGas, mode, sourceSheet) {
            headerRow: headerRowIdx + 1,
            scan: sourceIsRoster ? (mode === 'pp' ? 'Column F' : 'Column E') : 'All roster columns after Team',
            blueFills: Array.from(uniqueBlueFills),
-           greenFills: Array.from(uniqueGreenFills)
+           greenFills: Array.from(uniqueGreenFills),
+           purpleFills: Array.from(uniquePurpleFills)
        }
    };
 }
@@ -616,9 +617,9 @@ async function rmAnalyseWorkbook(file, mode, sourceSheet){
   for(let r=headerRow+1;r<=maxRow;r++){
     const id=rmNorm(grid.get(rmNumToCol(idCol)+r)?.val), name=rmCleanName(grid.get(rmNumToCol(nameCol)+r)?.val), team=rmNorm(grid.get(rmNumToCol(teamCol)+r)?.val);
     if(!id&&!name&&!team)continue;
-    for(const c of scanCols){const cell=grid.get(rmNumToCol(c)+r); const val=rmRosterVal(cell?.val); if(!cell||!val)continue; const fillCls=cell.fill.cls; let matchType=''; if(val==='2'&&fillCls==='blue')matchType='Rostered 2 in blue'; if(val==='OT2'&&fillCls==='green')matchType='Rostered OT2 in green'; if(matchType){const headerVal=grid.get(rmNumToCol(c)+headerRow)?.val||rmNumToCol(c); out.push({id,name,team,rosterDate:rmIsDate(headerVal)?rmExcelDate(headerVal):String(headerVal),cell:cell.ref,value:cell.val,detectedColor:fillCls,fillRgb:cell.fill.rgb,matchType});}}
+    for(const c of scanCols){const cell=grid.get(rmNumToCol(c)+r); const val=rmRosterVal(cell?.val); if(!cell||!val)continue; const fillCls=cell.fill.cls; let matchType=''; if(val==='2'&&fillCls==='blue')matchType='Rostered 2 in blue'; if(val==='OT2'&&(fillCls==='green'||fillCls==='purple'))matchType='Rostered OT2 in '+fillCls; if(matchType){const headerVal=grid.get(rmNumToCol(c)+headerRow)?.val||rmNumToCol(c); out.push({id,name,team,rosterDate:rmIsDate(headerVal)?rmExcelDate(headerVal):String(headerVal),cell:cell.ref,value:cell.val,detectedColor:fillCls,fillRgb:cell.fill.rgb,matchType});}}
   }
-  return {results:out, info:{fileName:file.name,sheetName:sheet.name,headerRow,scan:sourceIsRoster?(mode==='pp'?'Column F':'Column E'):'All roster columns after Team', blueFills:styles.fillColors.filter(f=>f.cls==='blue').map(f=>f.rgb).filter(Boolean), greenFills:styles.fillColors.filter(f=>f.cls==='green').map(f=>f.rgb).filter(Boolean)}};
+  return {results:out, info:{fileName:file.name,sheetName:sheet.name,headerRow,scan:sourceIsRoster?(mode==='pp'?'Column F':'Column E'):'All roster columns after Team', blueFills:styles.fillColors.filter(f=>f.cls==='blue').map(f=>f.rgb).filter(Boolean), greenFills:styles.fillColors.filter(f=>f.cls==='green').map(f=>f.rgb).filter(Boolean), purpleFills:styles.fillColors.filter(f=>f.cls==='purple').map(f=>f.rgb).filter(Boolean)}};
 }
 
 function rmUniqueExportRows(rows){
@@ -673,10 +674,10 @@ function rmBuildRosterModeReview(mode,data){
     <div class="alert ok">
       <b>Workbook:</b> ${rmEsc(data.info.fileName)}<br>
       <b>Sheet:</b> ${rmEsc(data.info.sheetName)} | <b>Header row:</b> ${data.info.headerRow} | <b>Scan:</b> ${rmEsc(data.info.scan)}<br>
-      <b>Detected colour:</b> Blue ${rmEsc(data.info.blueFills.join(', ')||'-')} | Green ${rmEsc(data.info.greenFills.join(', ')||'-')}
+      <b>Detected colour:</b> Blue ${rmEsc(data.info.blueFills.join(', ')||'-')} | Green ${rmEsc(data.info.greenFills.join(', ')||'-')} | Purple ${rmEsc(data.info.purpleFills?.join(', ')||'-')}
     </div>
     <div class="alert warn">
-      Use <b>Preview Excel table at bottom</b> to check the exact preview table before copying.
+      Use <b>Preview &amp; Copy Data</b> to copy the generated data easily.
     </div>
     <div class="ctitle" style="margin-top:12px">Detection details <span class="ctag">${data.results.length} match(es)</span></div>
     <div class="twrap">
@@ -692,10 +693,9 @@ async function runRosterModeAnalysis(mode){
   var inputMode = document.getElementById(mode+'InputMode').value; 
   var msg = document.getElementById(mode+'Msg');
   var review = document.getElementById(mode+'Review');
-  var previewBtn = document.getElementById(mode+'PreviewBtn');
   var preview = document.getElementById(mode+'ExcelPreview');
   
-  msg.innerHTML=''; review.style.display='none'; if(previewBtn)previewBtn.disabled=true; if(preview){preview.innerHTML=''; preview.style.display='none';}
+  msg.innerHTML=''; review.style.display='none'; if(preview){preview.innerHTML=''; preview.style.display='none';}
   ROSTER_MODE_STATE[mode].results=[];
   
   try{
@@ -716,9 +716,8 @@ async function runRosterModeAnalysis(mode){
     ROSTER_MODE_STATE[mode].results=data.results;
     ROSTER_MODE_STATE[mode].info=data.info;
     const exportRows=rmUniqueExportRows(data.results);
-    if(previewBtn)previewBtn.disabled=exportRows.length===0;
     var copyBtn=document.getElementById(mode+'CopyBtn'); if(copyBtn)copyBtn.disabled=exportRows.length===0;
-    msg.innerHTML='<div class="alert ok">Done. '+data.results.length+' matches found. Preview table has '+exportRows.length+' unique officer row(s). Click Preview Excel table at bottom to check before copying.</div>';
+    msg.innerHTML='<div class="alert ok">Done. '+data.results.length+' matches found. Preview table has '+exportRows.length+' unique officer row(s). Click Preview &amp; Copy Data to check and export.</div>';
     review.innerHTML=rmBuildRosterModeReview(mode,data);
     review.style.display='block';
   }catch(e){
@@ -734,7 +733,7 @@ function previewRosterModeXlsx(mode){
   const exportRows=rmUniqueExportRows(st.results);
   target.innerHTML=`
     <div class="ctitle">Excel table preview <span class="ctag">${rmEsc(st.title)}</span></div>
-    <div class="alert warn">This is the exact table that will be copied.</div>
+    <div class="alert warn">This is the exact table that has been copied to your clipboard.</div>
     ${rmBuildExcelLikePreview(st.results)}
   `;
   target.style.display='block';
@@ -1340,10 +1339,12 @@ function buildOT(){
   rosterList.forEach(function(ro){
     var id=ro.id,name=ro.name,team=ro.team;
     var statusRaw=ro.status,isNHB=ro.isNHB;
-    var claimOT=false,skipReason='';
+    var claimOT=false,skipReason='',is2200=false;
+    
     if(String(statusRaw)==='2'&&!isNHB)claimOT=true;
     else if(/OT2/i.test(String(statusRaw))&&!isNHB)claimOT=true;
-    else if((String(statusRaw)==='2'||/OT2/i.test(String(statusRaw)))&&isNHB)skipReason='NHB';
+    else if(String(statusRaw)==='2200'&&!isNHB){claimOT=true; is2200=true;}
+    else if((String(statusRaw)==='2'||/OT2/i.test(String(statusRaw))||String(statusRaw)==='2200')&&isNHB)skipReason='NHB';
     else skipReason=String(statusRaw)||'blank';
 
     var flight='',gate='',etd='',ccRole='',rem='';
@@ -1389,9 +1390,18 @@ function buildOT(){
       id:id, name:name, team:team, status:statusRaw, isNHB:isNHB, 
       claimOT:claimOT, skipReason:skipReason, flight:flight, gate:gate, 
       etd:etd, ccRole:ccRole, rem:rem, isCRF:isCRF, isKAH:isKAH,
-      preservedNote: preservedNotes[id] 
+      preservedNote: preservedNotes[id], is2200:is2200
     });
   });
+
+  // Sort _otList to group standard OTs first, then 2200s, then skipped
+  var stdList = [], t2List = [], skipList = [];
+  _otList.forEach(function(o) {
+      if (!o.claimOT) skipList.push(o);
+      else if (o.is2200) t2List.push(o);
+      else stdList.push(o);
+  });
+  _otList = stdList.concat(t2List).concat(skipList);
 
   renderOTTable(_otList);
   showMsg('p2msg','','');
@@ -1415,7 +1425,7 @@ function renderOTTable(list){
     row.setAttribute('data-search',(o.name+' '+o.id).toLowerCase());
     var inpid='otnote_'+o.id;
     var stag='';
-    if(o.claimOT)stag='<span class="tag ot">OT</span>';
+    if(o.claimOT)stag='<span class="tag ot">'+(o.is2200 ? '2200' : 'OT')+'</span>';
     else if(o.isNHB)stag='<span class="tag nhb">NHB</span>';
     else stag='<span class="tag skip">'+esc(o.skipReason||'Skip')+'</span>';
     if(o.claimOT&&!o.flight&&!o.isCRF&&!o.isKAH)stag+=' <span class="tag nf">No flight!</span>';
@@ -1480,31 +1490,40 @@ function togSkipped(){
   filterOT(q);
 }
 
-function buildHoldbackExportRows(){
-  var rows=[['S/N','ID','NAME','TEAM','OT Reasons']];
-  var sn=1;
+function buildHoldbackPreviewRows(){
+  var rows=[['ID','NAME','TEAM','Start','End','Start','End','Hrs','OT Reasons']];
+  var hasStandard = false;
+  var has2200 = false;
+  var addedEmptyRow = false;
+  
   _otList.forEach(function(o){
     if(!o.claimOT)return;
     var noteEl=document.getElementById('otnote_'+o.id);
     var note=noteEl?noteEl.value:'';
     if(!note){if(o.isKAH)note='SUPERVISOR DUTY';else note=o.flight||'';}
-    rows.push([sn++,o.id,o.name,o.team||'',note]);
+    
+    if (o.is2200) {
+       if (hasStandard && !addedEmptyRow) {
+          rows.push(['','','','','','','','','']);
+          addedEmptyRow = true;
+       }
+       has2200 = true;
+       rows.push([o.id,o.name,o.team||'','2200HRS','0800HRS','0800HRS','0900HRS','10',note]);
+    } else {
+       hasStandard = true;
+       rows.push([o.id,o.name,o.team||'','2000HRS','0800HRS','0800HRS','0900HRS','12',note]);
+    }
   });
   return rows;
 }
-function buildHoldbackPreviewRows(){
-  var exportRows=buildHoldbackExportRows();
-  return exportRows.map(function(row){
-    return Array.isArray(row)?row.slice(1):row;
-  });
-}
+
 function previewHoldbackXLSX(){
   var target=document.getElementById('otExcelPreview');
   if(!target)return;
   var rows=buildHoldbackPreviewRows();
   target.innerHTML=''+
     '<div class="ctitle">Excel table preview <span class="ctag">Extend OT</span></div>'+
-    '<div class="alert warn">This is the exact preview of the Holdback OT table. S/N is hidden in preview. Only claiming OT rows are included.</div>'+
+    '<div class="alert warn">This is the exact table that has been copied to your clipboard. S/N is automatically handled by Excel.</div>'+
     buildExcelPreviewFromRows(rows);
   target.style.display='block';
   target.scrollIntoView({behavior:'smooth',block:'start'});
@@ -1525,25 +1544,24 @@ function copyDataToClipboard(rows, successMsg) {
 }
 
 function copyHoldbackPreview() {
+  previewHoldbackXLSX();
   var rows = buildHoldbackPreviewRows();
   if (rows.length <= 1) { alert("No preview data to copy!"); return; }
   
-  var dataToCopy = rows.slice(1).map(function(r) {
-    return [r[0], r[1], r[2], '2000HRS', '0800HRS', '0800HRS', '0900HRS', '12', r[3]];
-  });
-  
-  copyDataToClipboard(dataToCopy, "Copied " + dataToCopy.length + " rows to clipboard! (Headers removed, 5 fixed columns added)");
+  var dataToCopy = rows.slice(1);
+  copyDataToClipboard(dataToCopy, "Preview generated and " + dataToCopy.length + " rows copied to clipboard! (Headers removed, fixed columns generated)");
 }
 
 function copyRosterModePreview(mode) {
+  previewRosterModeXlsx(mode);
   var st = ROSTER_MODE_STATE[mode];
   if (!st || !st.results.length) return;
+  
   var rows = rmExportBodyRows(st.results);
   if (rows.length <= 1) { alert("No preview data to copy!"); return; }
   
   var dataToCopy = rows.slice(1);
-  
-  copyDataToClipboard(dataToCopy, "Copied " + dataToCopy.length + " rows of " + st.title + " data to clipboard! (Headers removed)");
+  copyDataToClipboard(dataToCopy, "Preview generated and " + dataToCopy.length + " rows of " + st.title + " copied to clipboard! (Headers removed)");
 }
 </script>
 </body>
