@@ -347,7 +347,7 @@ table.ot tbody tr.skiprow{opacity:.45}
   <div id="ppMode">
     <div class="card">
       <div class="ctitle">PrePlanned OT</div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Analyse rostered <b>2</b> in blue and <b>OT2</b> in green/purple. Default source is <b>PrePlanned OT</b> tab. You can switch to <b>Roster</b> tab, column <b>F</b> if needed.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Analyse rostered <b>2</b> in blue and <b>OT2</b> in green/purple. Default source is <b>Roster</b> tab, column <b>F</b>. You can switch to <b>PrePlanned OT</b> tab if needed.</p>
       <div class="uz" id="ppMasterBox" style="cursor:default; text-align:left; margin-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <div class="uzl" style="font-size:13px; font-weight:600;">&#x1F4C1; Master Data</div>
@@ -368,11 +368,11 @@ table.ot tbody tr.skiprow{opacity:.45}
       <div style="margin-bottom:12px; max-width:420px;">
         <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Data source</label>
         <select id="ppSource" class="noteinp" onchange="rmOnSourceChange('pp')">
-          <option value="Roster">Roster tab - Column F</option>
-          <option value="PrePlanned OT" selected>PrePlanned OT tab</option>
+          <option value="Roster" selected>Roster tab - Column F</option>
+          <option value="PrePlanned OT">PrePlanned OT tab</option>
         </select>
       </div>
-      <div class="alert warn">Priority set to <b>PrePlanned OT</b>. For PrePlanned OT source, PrePlanned OT checks all roster/date columns after ID, Name and Team. For Roster source, it checks <b>column F only</b>.</div>
+      <div class="alert warn">Priority set to <b>Roster</b>. For Roster source, PrePlanned OT checks <b>column F only</b>. For PrePlanned OT source, it checks all roster/date columns after ID, Name and Team.</div>
       <div class="bgrp">
         <button class="btn primary" onclick="runRosterModeAnalysis('pp')">Analyse PrePlanned OT</button>
         <button class="btn" id="ppCopyBtn" onclick="copyRosterModePreview('pp')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Preview &amp; Copy Data</button>
@@ -604,7 +604,7 @@ function gasAnalyseWorkbook(rawGas, mode, sourceSheet) {
    var sourceIsRoster = (sUpper === 'ROSTER');
    var scanCols = [];
    if (sourceIsRoster) {
-       scanCols = [mode === 'pp' ? 5 : 4]; 
+       scanCols = rmRosterScanCols(rows[headerRowIdx], Math.max(idCol,nameCol,teamCol)+1, mode === 'pp' ? 5 : 4);
    } else {
        var start = Math.max(idCol, nameCol, teamCol) + 1;
        for(var c=start; c<rows[headerRowIdx].length; c++) scanCols.push(c);
@@ -633,8 +633,14 @@ function gasAnalyseWorkbook(rawGas, mode, sourceSheet) {
            var fillCls = rmClassify(hexColor);
            
            var matchType = '';
-           if(val === '2' && fillCls === 'blue') matchType = 'Rostered 2 in blue';
-           if(val === 'OT2' && (fillCls === 'green' || fillCls === 'purple')) matchType = 'Rostered OT2 in ' + fillCls;
+           if(sourceIsRoster){
+             // The Roster tab marks rostered duty by VALUE ("2"), not by cell colour.
+             if(val === '2' && !rmIsNHBFill(hexColor)) matchType = 'Rostered 2';
+             if(val === 'OT2' && (fillCls === 'green' || fillCls === 'purple')) matchType = 'Rostered OT2 in ' + fillCls;
+           } else {
+             if(val === '2' && fillCls === 'blue') matchType = 'Rostered 2 in blue';
+             if(val === 'OT2' && (fillCls === 'green' || fillCls === 'purple')) matchType = 'Rostered OT2 in ' + fillCls;
+           }
            
            if(matchType) {
                if(fillCls==='blue') uniqueBlueFills.add(hexColor);
@@ -664,7 +670,7 @@ function gasAnalyseWorkbook(rawGas, mode, sourceSheet) {
            fileName: 'Loaded from Google Sheets',
            sheetName: sheetName,
            headerRow: headerRowIdx + 1,
-           scan: sourceIsRoster ? (mode === 'pp' ? 'Column F' : 'Column E') : 'All roster columns after Team',
+           scan: sourceIsRoster ? ('Column ' + rmNumToCol(scanCols[0] + 1)) : 'All roster columns after Team',
            blueFills: Array.from(uniqueBlueFills),
            greenFills: Array.from(uniqueGreenFills),
            purpleFills: Array.from(uniquePurpleFills)
@@ -688,14 +694,19 @@ async function rmAnalyseWorkbook(file, mode, sourceSheet){
   if(!headerRow)throw new Error('Cannot identify header row with ID, Name and Team.');
   const sourceIsRoster=rmUpper(sheet.name)==='ROSTER';
   let scanCols=[];
-  if(sourceIsRoster){ scanCols=[mode==='pp'?6:5]; } else { const start=Math.max(idCol,nameCol,teamCol)+1; for(let c=start;c<=maxCol;c++)scanCols.push(c); }
+  if(sourceIsRoster){
+    const hdr=[]; for(let c=1;c<=maxCol;c++){ hdr[c]=grid.get(rmNumToCol(c)+headerRow)?.val; }
+    scanCols=rmRosterScanCols(hdr, Math.max(idCol,nameCol,teamCol)+1, mode==='pp'?6:5);
+  } else { const start=Math.max(idCol,nameCol,teamCol)+1; for(let c=start;c<=maxCol;c++)scanCols.push(c); }
   const out=[];
   for(let r=headerRow+1;r<=maxRow;r++){
     const id=rmNorm(grid.get(rmNumToCol(idCol)+r)?.val), name=rmCleanName(grid.get(rmNumToCol(nameCol)+r)?.val), team=rmNorm(grid.get(rmNumToCol(teamCol)+r)?.val);
     if(!id&&!name&&!team)continue;
-    for(const c of scanCols){const cell=grid.get(rmNumToCol(c)+r); const val=rmRosterVal(cell?.val); if(!cell||!val)continue; const fillCls=cell.fill.cls; let matchType=''; if(val==='2'&&fillCls==='blue')matchType='Rostered 2 in blue'; if(val==='OT2'&&(fillCls==='green'||fillCls==='purple'))matchType='Rostered OT2 in '+fillCls; if(matchType){const headerVal=grid.get(rmNumToCol(c)+headerRow)?.val||rmNumToCol(c); out.push({id,name,team,rosterDate:rmIsDate(headerVal)?rmExcelDate(headerVal):String(headerVal),cell:cell.ref,value:cell.val,detectedColor:fillCls,fillRgb:cell.fill.rgb,matchType});}}
+    for(const c of scanCols){const cell=grid.get(rmNumToCol(c)+r); const val=rmRosterVal(cell?.val); if(!cell||!val)continue; const fillCls=cell.fill.cls; let matchType='';
+     if(sourceIsRoster){ if(val==='2'&&!rmIsNHBFill(cell.fill.rgb))matchType='Rostered 2'; if(val==='OT2'&&(fillCls==='green'||fillCls==='purple'))matchType='Rostered OT2 in '+fillCls; }
+     else { if(val==='2'&&fillCls==='blue')matchType='Rostered 2 in blue'; if(val==='OT2'&&(fillCls==='green'||fillCls==='purple'))matchType='Rostered OT2 in '+fillCls; } if(matchType){const headerVal=grid.get(rmNumToCol(c)+headerRow)?.val||rmNumToCol(c); out.push({id,name,team,rosterDate:rmIsDate(headerVal)?rmExcelDate(headerVal):String(headerVal),cell:cell.ref,value:cell.val,detectedColor:fillCls,fillRgb:cell.fill.rgb,matchType});}}
   }
-  return {results:out, info:{fileName:file.name,sheetName:sheet.name,headerRow,scan:sourceIsRoster?(mode==='pp'?'Column F':'Column E'):'All roster columns after Team', blueFills:styles.fillColors.filter(f=>f.cls==='blue').map(f=>f.rgb).filter(Boolean), greenFills:styles.fillColors.filter(f=>f.cls==='green').map(f=>f.rgb).filter(Boolean), purpleFills:styles.fillColors.filter(f=>f.cls==='purple').map(f=>f.rgb).filter(Boolean)}};
+  return {results:out, info:{fileName:file.name,sheetName:sheet.name,headerRow,scan:sourceIsRoster?('Column '+rmNumToCol(scanCols[0])):'All roster columns after Team', blueFills:styles.fillColors.filter(f=>f.cls==='blue').map(f=>f.rgb).filter(Boolean), greenFills:styles.fillColors.filter(f=>f.cls==='green').map(f=>f.rgb).filter(Boolean), purpleFills:styles.fillColors.filter(f=>f.cls==='purple').map(f=>f.rgb).filter(Boolean)}};
 }
 
 function rmUniqueExportRows(rows){
@@ -1771,6 +1782,39 @@ function rmFindHeader(values){
   return null;
 }
 
+// Yellow fill marks NHB (not holding back) in the roster.
+function rmIsNHBFill(rgb){
+  var c=String(rgb||'').toLowerCase();
+  if(c.charAt(0)==='#')c=c.substring(1);
+  return c==='ffff00'||c==='ffffff00'||c.slice(-6)==='ffff00';
+}
+
+// True when a header cell holds a date-like value (ISO string, Date, or Excel serial).
+function rmIsDateHeader(v){
+  if(v===null||v===undefined||v==='')return false;
+  if(v instanceof Date)return !isNaN(v.getTime());
+  if(typeof v==='number')return v>20000&&v<80000;
+  var s=String(v).trim();
+  if(!s)return false;
+  if(/^\d{4}-\d{1,2}-\d{1,2}/.test(s))return true;
+  if(/^\d{1,2}[-\s][A-Za-z]{3}/.test(s))return true;
+  return false;
+}
+
+// Chooses which roster date column(s) to scan.
+// Preference is column F (pp) / column E (co). The roster sheet rolls its date
+// columns, so when the preferred column is absent we fall back to the last
+// date column that actually exists.
+function rmRosterScanCols(headerRow, firstDateCol, preferredCol){
+  var dateCols=[];
+  for(var c=firstDateCol; c<headerRow.length; c++){
+    if(rmIsDateHeader(headerRow[c]))dateCols.push(c);
+  }
+  if(!dateCols.length)return [];
+  if(dateCols.indexOf(preferredCol)!==-1)return [preferredCol];
+  return [dateCols[dateCols.length-1]];
+}
+
 // Which tab + header column the analysis scans for a given mode and data source.
 // Mirrors the scan rules used by gasAnalyseWorkbook / rmAnalyseWorkbook:
 //   Roster source   -> pp scans column F, co scans column E
@@ -1798,8 +1842,17 @@ function rmDateForSource(mode, source){
     if(!tab || !tab.values || !tab.values.length) continue;
     var head = rmFindHeader(tab.values);
     if(!head) continue;
-    var colIdx = (t.colIdx===null) ? Math.max(head.idCol, head.nameCol, head.teamCol)+1 : t.colIdx;
     var row = tab.values[head.row]||[];
+    var colIdx;
+    if(t.colIdx===null){
+      colIdx = Math.max(head.idCol, head.nameCol, head.teamCol)+1;
+    } else {
+      // Roster source: use the same column the analysis actually scans.
+      var first = Math.max(head.idCol, head.nameCol, head.teamCol)+1;
+      var cols = rmRosterScanCols(row, first, t.colIdx);
+      if(!cols.length) continue;
+      colIdx = cols[0];
+    }
     var stamp = rmStampFromValue(row[colIdx]);
     if(stamp){
       var cellRef = rmNumToCol(colIdx+1)+(head.row+1);
