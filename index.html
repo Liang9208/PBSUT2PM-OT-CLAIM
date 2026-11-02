@@ -189,28 +189,33 @@ table.ot tbody tr.skiprow{opacity:.45}
       </div>
       <div class="ugrid">
         
-        <div class="uz" id="mz" style="cursor:default; text-align:left;">
+        <div class="uz" id="otMasterBox" style="cursor:default; text-align:left;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
             <div class="uzl" style="font-size:13px; font-weight:600;">&#x1F4C1; Master Data</div>
-            <select id="masterSourceType" class="noteinp" style="width:auto; padding:2px 4px; font-size:11px;" onchange="toggleMasterSource()">
+            <select id="otMasterSourceType" class="noteinp" style="width:auto; padding:2px 4px; font-size:11px;" onchange="toggleMasterSource('ot')">
               <option value="sheet" selected>Google Sheet</option>
               <option value="file">Excel File</option>
             </select>
           </div>
           
-          <div id="masterSheetInput">
-            <input type="text" id="mSheetLink" class="noteinp" placeholder="Paste Google Sheet Link here..." value="https://docs.google.com/spreadsheets/d/130I3vxhiPd54QgTnA52ryBQr0k1dVARugrJEjnxIWpc/edit?gid=1483239688#gid=1483239688" style="margin-bottom:6px;">
-            <button type="button" class="btn" style="width:100%; justify-content:center; padding:4px; margin-bottom:6px; font-weight:600; color:var(--blue); border-color:var(--bbd); background:var(--bbg);" onclick="var url=document.getElementById('mSheetLink').value.trim(); if(url){ window.open(url, '_blank'); }else{ alert('Please paste a Google Sheet link first!'); }">🔗 Open in New Tab</button>
-            <button type="button" class="btn preview" style="width:100%; justify-content:center; padding:4px;" onclick="loadFromSheet()">Fetch Data</button>
+          <div id="otMasterSheetInput">
+            <input type="text" id="otMasterLink" class="noteinp" placeholder="Paste Google Sheet Link here..." value="https://docs.google.com/spreadsheets/d/130I3vxhiPd54QgTnA52ryBQr0k1dVARugrJEjnxIWpc/edit?gid=1483239688#gid=1483239688" style="margin-bottom:6px;">
+            <button type="button" class="btn" style="width:100%; justify-content:center; padding:4px; margin-bottom:6px; font-weight:600; color:var(--blue); border-color:var(--bbd); background:var(--bbg);" onclick="var url=document.getElementById('otMasterLink').value.trim(); if(url){ window.open(url, '_blank'); }else{ alert('Please paste a Google Sheet link first!'); }">🔗 Open in New Tab</button>
+            <button type="button" class="btn preview" style="width:100%; justify-content:center; padding:4px;" onclick="loadFromSheet('ot')">Fetch Data</button>
           </div>
           
-          <div id="masterFileInput" style="display:none; text-align:center; padding-top:8px;">
+          <div id="otMasterFileInput" style="display:none; text-align:center; padding-top:8px;">
             <label style="cursor:pointer; display:block;">
-              <input type="file" id="mFile" accept=".xlsx,.xls" onchange="loadMaster(this)" style="display:none;">
+              <input type="file" id="otMasterFile" accept=".xlsx,.xls" onchange="loadMaster(this,'ot')" style="display:none;">
               <div class="uzs" style="text-decoration:underline; color:var(--blue);">Click to browse .xlsx</div>
             </label>
           </div>
-          <div class="uzf" id="mName" style="text-align:center;"></div>
+          <div class="uzf" id="otMasterName" style="text-align:center;"></div>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--border);">
+            <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">Export date</label>
+            <input type="text" id="otDateInput" class="noteinp" style="width:110px; padding:4px 6px; font-family:monospace;" placeholder="YYYYMMDD" oninput="rmOnDateInput('ot', this.value)">
+            <span id="otDateHint" style="font-size:11px;color:var(--muted);"></span>
+          </div>
         </div>
 
         <label class="uz" id="pz">
@@ -292,6 +297,7 @@ table.ot tbody tr.skiprow{opacity:.45}
       </div>
       <div class="bgrp" style="margin-top:12px">
         <button class="btn" id="copyPreviewBtn" onclick="copyHoldbackPreview()" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Preview &amp; Copy Data</button>
+        <button class="btn" id="otExportBtn" onclick="exportHoldbackXlsx()" disabled style="background:var(--bbg); color:var(--blue); border-color:var(--bbd); font-weight:700;">⬇️ Export Excel</button>
         <button class="btn" id="togSkipBtn" onclick="togSkipped()">Show skipped</button>
         <button class="btn" onclick="goPanel(2)">&#x2039; Back to flights</button>
       </div>
@@ -306,7 +312,7 @@ table.ot tbody tr.skiprow{opacity:.45}
       <div class="apigrid" style="margin-bottom:12px">
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Data source</label>
-          <select id="coSource" class="noteinp">
+          <select id="coSource" class="noteinp" onchange="rmOnSourceChange('co')">
             <option value="Roster" selected>Roster tab - Column E</option>
             <option value="Confirm Off OT">Confirm Off OT tab</option>
           </select>
@@ -323,9 +329,15 @@ table.ot tbody tr.skiprow{opacity:.45}
         </div>
       </div>
       <div class="alert warn">Priority set to <b>Roster</b>. For Roster source, Confirm Off OT checks <b>column E only</b>. For Confirm Off OT source, it checks all roster/date columns after ID, Name and Team.</div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">Export date</label>
+        <input type="text" id="coDateInput" class="noteinp" style="width:110px; padding:4px 6px; font-family:monospace;" placeholder="YYYYMMDD" oninput="rmOnDateInput('co', this.value)">
+        <span id="coDateHint" style="font-size:11px;color:var(--muted);"></span>
+      </div>
       <div class="bgrp">
         <button class="btn primary" onclick="runRosterModeAnalysis('co')">Analyse Confirm Off OT</button>
         <button class="btn" id="coCopyBtn" onclick="copyRosterModePreview('co')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Preview &amp; Copy Data</button>
+        <button class="btn" id="coExportBtn" onclick="exportRosterModeXlsx('co')" disabled style="background:var(--bbg); color:var(--blue); border-color:var(--bbd); font-weight:700;">⬇️ Export Excel</button>
       </div>
       <div id="coMsg"></div>
       <div id="coReview" style="display:none;margin-top:12px"></div>
@@ -335,30 +347,36 @@ table.ot tbody tr.skiprow{opacity:.45}
   <div id="ppMode">
     <div class="card">
       <div class="ctitle">PrePlanned OT</div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Analyse rostered <b>2</b> in blue and <b>OT2</b> in green/purple. Default source is <b>Roster</b> tab, column <b>F</b>. You can switch to <b>PrePlanned OT</b> tab if needed.</p>
-      <div class="apigrid" style="margin-bottom:12px">
-        <div>
-          <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Data source</label>
-          <select id="ppSource" class="noteinp">
-            <option value="Roster" selected>Roster tab - Column F</option>
-            <option value="PrePlanned OT">PrePlanned OT tab</option>
-          </select>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Analyse rostered <b>2</b> in blue and <b>OT2</b> in green/purple. Default source is <b>PrePlanned OT</b> tab. You can switch to <b>Roster</b> tab, column <b>F</b> if needed.</p>
+      <div class="uz" id="ppMasterBox" style="cursor:default; text-align:left; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div class="uzl" style="font-size:13px; font-weight:600;">&#x1F4C1; Master Data</div>
+          <div style="font-size:11px;color:var(--muted);">Google Sheet</div>
         </div>
-        <div>
-          <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Input Method</label>
-          <select id="ppInputMode" class="noteinp" onchange="document.getElementById('ppFileWrap').style.display=this.value==='file'?'block':'none'">
-            <option value="master" selected>Use Master Google Sheet</option>
-            <option value="file">Upload Excel file</option>
-          </select>
-          <div id="ppFileWrap" style="display:none; margin-top:6px;">
-            <input type="file" id="ppFile" accept=".xlsx,.xls" class="noteinp">
-          </div>
+        <div id="ppMasterSheetInput">
+          <input type="text" id="ppMasterLink" class="noteinp" placeholder="Paste Google Sheet Link here..." value="https://docs.google.com/spreadsheets/d/130I3vxhiPd54QgTnA52ryBQr0k1dVARugrJEjnxIWpc/edit?gid=1483239688#gid=1483239688" style="margin-bottom:6px;">
+          <button type="button" class="btn" style="width:100%; justify-content:center; padding:4px; font-weight:600; color:var(--blue); border-color:var(--bbd); background:var(--bbg);" onclick="var url=document.getElementById('ppMasterLink').value.trim(); if(url){ window.open(url, '_blank'); }else{ alert('Please paste a Google Sheet link first!'); }">🔗 Open in New Tab</button>
+        </div>
+        <div class="uzf" id="ppMasterName" style="text-align:center;"></div>
+        <div class="hint" style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5">The master sheet is fetched automatically when you click <b>Analyse PrePlanned OT</b>.</div>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--border);">
+          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">Export date</label>
+          <input type="text" id="ppDateInput" class="noteinp" style="width:110px; padding:4px 6px; font-family:monospace;" placeholder="YYYYMMDD" oninput="rmOnDateInput('pp', this.value)">
+          <span id="ppDateHint" style="font-size:11px;color:var(--muted);"></span>
         </div>
       </div>
-      <div class="alert warn">Priority set to <b>Roster</b>. For Roster source, PrePlanned OT checks <b>column F only</b>. For PrePlanned OT source, it checks all roster/date columns after ID, Name and Team.</div>
+      <div style="margin-bottom:12px; max-width:420px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Data source</label>
+        <select id="ppSource" class="noteinp" onchange="rmOnSourceChange('pp')">
+          <option value="Roster">Roster tab - Column F</option>
+          <option value="PrePlanned OT" selected>PrePlanned OT tab</option>
+        </select>
+      </div>
+      <div class="alert warn">Priority set to <b>PrePlanned OT</b>. For PrePlanned OT source, PrePlanned OT checks all roster/date columns after ID, Name and Team. For Roster source, it checks <b>column F only</b>.</div>
       <div class="bgrp">
         <button class="btn primary" onclick="runRosterModeAnalysis('pp')">Analyse PrePlanned OT</button>
         <button class="btn" id="ppCopyBtn" onclick="copyRosterModePreview('pp')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Preview &amp; Copy Data</button>
+        <button class="btn" id="ppExportBtn" onclick="exportRosterModeXlsx('pp')" disabled style="background:var(--bbg); color:var(--blue); border-color:var(--bbd); font-weight:700;">⬇️ Export Excel</button>
       </div>
       <div id="ppMsg"></div>
       <div id="ppReview" style="display:none;margin-top:12px"></div>
@@ -372,71 +390,129 @@ table.ot tbody tr.skiprow{opacity:.45}
 <script>
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyh6yXjZ_lH4dgCEtIwPByDQ0xnRBI3MGGJ2ES9oGVOoGXMzvX-0p_xF1YHTr_IRzYq/exec";
 var masterData={grouping:null,roster:[],kah:{},rawGAS:null};
+var ppMaster={rawGAS:null};
+var rmRosterStatusDate=null;
 var photoB64='',photoMime='image/png';
 var flightRows=[],_otList=[],_skipped=false,_frid=0;
 const ROSTER_MODE_STATE = { pp:{results:[], title:'PrePlanned OT'}, co:{results:[], title:'Confirm Off OT'} };
 const XNS='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 const XRNS='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
-function toggleMasterSource() {
-  var type = document.getElementById('masterSourceType').value;
-  document.getElementById('masterSheetInput').style.display = (type === 'sheet') ? 'block' : 'none';
-  document.getElementById('masterFileInput').style.display = (type === 'file') ? 'block' : 'none';
+function masterIds(scope){
+  scope=scope||'ot';
+  return {sourceType:scope+'MasterSourceType',sheetInput:scope+'MasterSheetInput',fileInput:scope+'MasterFileInput',link:scope+'MasterLink',file:scope+'MasterFile',box:scope+'MasterBox',name:scope+'MasterName'};
 }
 
-async function ensureGoogleSheetData() {
-  if (masterData.rawGAS) return; 
-
-  var urlInput = document.getElementById('mSheetLink').value.trim();
-  if (!urlInput) throw new Error('Please paste a Google Sheet link in the Holdback OT tab setup.');
-  
-  var idMatch = urlInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
-  if (!idMatch || !idMatch[1]) throw new Error('Invalid Google Sheet link. Ensure it contains /d/ID');
-  var sheetId = idMatch[1];
-  
-  var response = await fetch(GAS_WEB_APP_URL + '?id=' + sheetId);
-  var data = await response.json();
-  
-  if (data.error) throw new Error(data.error);
-  if (!data.grouping) throw new Error("Missing 'Grouping' tab in sheet.");
-  if (!data.roster || !data.roster.values) throw new Error("Missing 'Roster' tab in sheet.");
-  
-  masterData.rawGAS = data;
-  masterData.grouping = parseGrouping(data.grouping);
-  masterData.roster = parseRoster(data.roster, true);
-  masterData.kah = data.kah ? parseKAH(data.kah) : {};
-  
-  if (data.api) {
-    var ar = data.api;
-    for (var i = 0; i < ar.length; i++) {
-      for (var j = 0; j < ar[i].length; j++) {
-        var cv = String(ar[i][j]).trim();
-        if (cv.length > 10) {
-          if (cv.startsWith('AIzaSy')) {
-            if (!document.getElementById('apiKey').value) document.getElementById('apiKey').value = cv;
-          } else if (cv.startsWith('sk-or-v1-')) {
-            if (!document.getElementById('apiKey2').value) document.getElementById('apiKey2').value = cv;
-          } else {
-            if (!document.getElementById('apiKey').value) document.getElementById('apiKey').value = cv;
-          }
+function applyApiKeys(data){
+  if(!data||!data.api)return;
+  var ar=data.api;
+  for(var i=0;i<ar.length;i++){
+    for(var j=0;j<ar[i].length;j++){
+      var cv=String(ar[i][j]).trim();
+      if(cv.length>10){
+        if(cv.startsWith('AIzaSy')){
+          if(!document.getElementById('apiKey').value)document.getElementById('apiKey').value=cv;
+        }else if(cv.startsWith('sk-or-v1-')){
+          if(!document.getElementById('apiKey2').value)document.getElementById('apiKey2').value=cv;
+        }else{
+          if(!document.getElementById('apiKey').value)document.getElementById('apiKey').value=cv;
         }
       }
     }
   }
-  
-  document.getElementById('mz').classList.add('done');
-  document.getElementById('mName').textContent = "Loaded from Google Sheets";
+}
+
+function toggleMasterSource(scope) {
+  var ids = masterIds(scope);
+  var type = document.getElementById(ids.sourceType).value;
+  document.getElementById(ids.sheetInput).style.display = (type === 'sheet') ? 'block' : 'none';
+  document.getElementById(ids.fileInput).style.display = (type === 'file') ? 'block' : 'none';
+}
+
+async function ensureGoogleSheetData(scope) {
+  scope = scope || 'ot';
+  var ids = masterIds(scope);
+
+  if (scope === 'pp') {
+    if (ppMaster.rawGAS) return;
+
+    var ppUrlInput = document.getElementById(ids.link).value.trim();
+    if (!ppUrlInput) throw new Error('Please paste a Google Sheet link in the PrePlanned OT tab Master Data section.');
+
+    var ppIdMatch = ppUrlInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    if (!ppIdMatch || !ppIdMatch[1]) throw new Error('Invalid Google Sheet link. Ensure it contains /d/ID');
+
+    var ppResponse = await fetch(GAS_WEB_APP_URL + '?id=' + ppIdMatch[1]);
+    var ppData = await ppResponse.json();
+    if (ppData.error) throw new Error(ppData.error);
+
+    if(!ppData.pp && !ppData.roster) throw new Error("Missing 'PrePlanned OT' / 'Roster' tab in sheet.");
+
+    ppMaster.rawGAS = ppData;
+    applyApiKeys(ppData);
+
+    // Record the date for the currently selected data source at fetch time.
+    rmApplyDateForSource('pp', true);
+
+    document.getElementById(ids.box).classList.add('done');
+    document.getElementById(ids.name).textContent = "Loaded from Google Sheets";
+    return;
+  }
+
+  if (masterData.rawGAS) return;
+
+  var urlInput = document.getElementById(ids.link).value.trim();
+  if (!urlInput) throw new Error('Please paste a Google Sheet link in the Holdback OT tab setup.');
+
+  var idMatch = urlInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
+  if (!idMatch || !idMatch[1]) throw new Error('Invalid Google Sheet link. Ensure it contains /d/ID');
+  var sheetId = idMatch[1];
+
+  var response = await fetch(GAS_WEB_APP_URL + '?id=' + sheetId);
+  var data = await response.json();
+
+  if (data.error) throw new Error(data.error);
+  if (!data.grouping) throw new Error("Missing 'Grouping' tab in sheet.");
+  if (!data.roster || !data.roster.values) throw new Error("Missing 'Roster' tab in sheet.");
+
+  masterData.rawGAS = data;
+  masterData.grouping = parseGrouping(data.grouping);
+  masterData.roster = parseRoster(data.roster, true);
+  masterData.kah = data.kah ? parseKAH(data.kah) : {};
+
+  applyApiKeys(data);
+
+  // Holdback OT always reads the Roster tab's status column (column D).
+  rmRecordSheetDate('ot', rmSheetD1Stamp(data.roster), 'Roster tab D1');
+  // Confirm Off OT follows its own selected data source.
+  rmApplyDateForSource('co', true);
+
+  document.getElementById(ids.box).classList.add('done');
+  document.getElementById(ids.name).textContent = "Loaded from Google Sheets";
   chkReady();
 }
 
-async function loadFromSheet() {
+async function loadFromSheet(scope) {
+  scope = scope || 'ot';
   setLoading(true, 'Fetching data from Google Sheets...');
-  try {
-    masterData.rawGAS = null; 
-    await ensureGoogleSheetData();
-    showMsg('p1msg', 'Google Sheet parsed successfully!', 'ok');
+  try{
+    if (scope === 'pp') { ppMaster.rawGAS = null; }
+    else { masterData.rawGAS = null; }
+    await ensureGoogleSheetData(scope);
+    showMsg(scope === 'pp' ? 'ppMsg' : 'p1msg', 'Google Sheet parsed successfully!', 'ok');
   } catch (ex) {
-    showMsg('p1msg', 'Error fetching sheet: ' + ex.message, 'err');
+    showMsg(scope === 'pp' ? 'ppMsg' : 'p1msg', 'Error fetching sheet: ' + ex.message, 'err');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// PrePlanned OT has no manual Fetch button: the sheet is pulled automatically
+// when the user runs the analysis.
+async function ensurePPGoogleSheetData() {
+  setLoading(true, 'Fetching Master Google Sheet...');
+  try{
+    await ensureGoogleSheetData('pp');
   } finally {
     setLoading(false);
   }
@@ -690,7 +766,8 @@ function rmBuildRosterModeReview(mode,data){
 
 async function runRosterModeAnalysis(mode){
   var source = document.getElementById(mode+'Source').value;
-  var inputMode = document.getElementById(mode+'InputMode').value; 
+  var inputModeEl = document.getElementById(mode+'InputMode');
+  var inputMode = inputModeEl ? inputModeEl.value : 'master';
   var msg = document.getElementById(mode+'Msg');
   var review = document.getElementById(mode+'Review');
   var preview = document.getElementById(mode+'ExcelPreview');
@@ -700,23 +777,30 @@ async function runRosterModeAnalysis(mode){
   
   try{
     var data;
-    if(inputMode === 'master') {
-       msg.innerHTML='<div class="alert warn">Fetching and Analysing Google Sheet data...</div>';
-       setLoading(true, 'Fetching Master Google Sheet...');
-       await ensureGoogleSheetData();
-       setLoading(false);
-       data = gasAnalyseWorkbook(masterData.rawGAS, mode, source);
+    if(mode === 'pp') {
+      msg.innerHTML='<div class="alert warn">Analysing PrePlanned OT master data...</div>';
+      await ensurePPGoogleSheetData();
+      data = gasAnalyseWorkbook(ppMaster.rawGAS, mode, source);
+    } else if(inputMode === 'master') {
+      msg.innerHTML='<div class="alert warn">Fetching and Analysing Google Sheet data...</div>';
+      setLoading(true, 'Fetching Master Google Sheet...');
+      await ensureGoogleSheetData();
+      setLoading(false);
+      data = gasAnalyseWorkbook(masterData.rawGAS, mode, source);
     } else {
-       var file = document.getElementById(mode+'File').files[0];
-       if(!file) throw new Error('Please choose an Excel file first.');
-       msg.innerHTML='<div class="alert warn">Analysing '+rmEsc(source)+'...</div>';
-       data = await rmAnalyseWorkbook(file, mode, source);
+      var file = document.getElementById(mode+'File').files[0];
+      if(!file) throw new Error('Please choose an Excel file first.');
+      msg.innerHTML='<div class="alert warn">Analysing '+rmEsc(source)+'...</div>';
+      data = await rmAnalyseWorkbook(file, mode, source);
     }
     
     ROSTER_MODE_STATE[mode].results=data.results;
     ROSTER_MODE_STATE[mode].info=data.info;
+    // Keep the export date aligned with the source that was just analysed.
+    rmSyncDateAfterAnalysis(mode, source);
     const exportRows=rmUniqueExportRows(data.results);
     var copyBtn=document.getElementById(mode+'CopyBtn'); if(copyBtn)copyBtn.disabled=exportRows.length===0;
+    var exportBtn=document.getElementById(mode+'ExportBtn'); if(exportBtn)exportBtn.disabled=exportRows.length===0;
     msg.innerHTML='<div class="alert ok">Done. '+data.results.length+' matches found. Preview table has '+exportRows.length+' unique officer row(s). Click Preview &amp; Copy Data to check and export.</div>';
     review.innerHTML=rmBuildRosterModeReview(mode,data);
     review.style.display='block';
@@ -771,9 +855,11 @@ function chkReady(){
   }
 }
 
-function loadMaster(inp){
+function loadMaster(inp,scope){
+  scope=scope||'ot';
+  var ids=masterIds(scope);
   var f=inp.files[0];if(!f)return;
-  document.getElementById('mName').textContent=f.name;
+  document.getElementById(ids.name).textContent=f.name;
   var rd=new FileReader();
   rd.onload=function(e){
     try{
@@ -784,23 +870,22 @@ function loadMaster(inp){
       var aName=wb.SheetNames.find(function(s){return s.toLowerCase().includes('api');});
       if(!gName)throw new Error("No 'grouping' tab found");
       if(!rName)throw new Error("No 'roster' tab found");
-      masterData.grouping=parseGrouping(wb.Sheets[gName]);
-      masterData.roster=parseRoster(wb.Sheets[rName]);
-      masterData.kah=kName?parseKAH(wb.Sheets[kName]):{};
-      masterData.rawGAS=null; 
-      if(aName){
-        var ar=XLSX.utils.sheet_to_json(wb.Sheets[aName],{header:1,defval:''});
-        for(var i=0;i<ar.length;i++)for(var j=0;j<ar[i].length;j++){var cv=String(ar[i][j]).trim();if(cv.length>10){
-            if(cv.startsWith('AIzaSy')){
-                if(!document.getElementById('apiKey').value)document.getElementById('apiKey').value = cv;
-            } else if(cv.startsWith('sk-or-v1-')){
-                if(!document.getElementById('apiKey2').value)document.getElementById('apiKey2').value = cv;
-            } else {
-                if(!document.getElementById('apiKey').value)document.getElementById('apiKey').value = cv;
-            }
-          }}
+      if(scope!=='pp'){
+        masterData.grouping=parseGrouping(wb.Sheets[gName]);
+        masterData.roster=parseRoster(wb.Sheets[rName]);
+        masterData.kah=kName?parseKAH(wb.Sheets[kName]):{};
+        masterData.rawGAS=null;
       }
-      document.getElementById('mz').classList.add('done');
+      // Record the roster date (column D header) found in the uploaded workbook.
+      var fileStamp = rmStampFromValue(rmRosterStatusDate);
+      if (fileStamp) {
+        rmRecordSheetDate('ot', fileStamp, 'Roster tab D1');
+        rmRecordSheetDate('co', fileStamp, 'Roster tab D1');
+      }
+      if(aName){
+        applyApiKeys({api:XLSX.utils.sheet_to_json(wb.Sheets[aName],{header:1,defval:''})});
+      }
+      document.getElementById(ids.box).classList.add('done');
       chkReady();
     }catch(ex){showMsg('p1msg','Excel error: '+ex.message,'err');}
   };
@@ -942,6 +1027,8 @@ function parseRoster(ws, isFromGAS){
     else if(txt==='TEAM')teamCol=c;
     else if(txt.match(/^\d{4}-\d{2}-\d{2}$/)||txt.match(/^\d{1,2}[-\/][A-Z]{3}/i)||c===3)statusCol=c;
   }
+  // Header of the roster date column (column D) - used for the export file name.
+  rmRosterStatusDate = rows[headerRow][statusCol];
   
   for(var ri=headerRow+1;ri<rows.length;ri++){
     var r=rows[ri];
@@ -1406,6 +1493,7 @@ function buildOT(){
   renderOTTable(_otList);
   showMsg('p2msg','','');
   var cpBtn=document.getElementById('copyPreviewBtn');if(cpBtn)cpBtn.disabled=false;
+  var exBtn=document.getElementById('otExportBtn');if(exBtn)exBtn.disabled=false;
   goPanel(3);
 }
 
@@ -1541,6 +1629,302 @@ function copyDataToClipboard(rows, successMsg) {
   }).catch(function(err) {
     alert("Clipboard copy failed: " + err);
   });
+}
+
+// Builds a real .xlsx workbook from the preview rows (row 0 = header) and downloads it.
+function exportRowsToXlsx(rows, fileName, sheetName){
+  if (!rows || rows.length === 0) { alert("No data to export!"); return; }
+  if (typeof XLSX === 'undefined') { alert("Excel library not loaded. Please check your internet connection and reload the page."); return; }
+  try {
+    var ws = XLSX.utils.aoa_to_sheet(rows);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Sheet1');
+    XLSX.writeFile(wb, fileName);
+  } catch(err) {
+    alert("Excel export failed: " + (err && err.message ? err.message : err));
+  }
+}
+
+function rmExportTimestamp(){
+  var d = new Date();
+  function p(n){ return String(n).padStart(2,'0'); }
+  return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes());
+}
+
+// Date captured at fetch time, per tab. User can override via the visible input.
+//   ot -> Google Sheet "Roster" tab D1
+//   pp -> Google Sheet "PrePlanned OT" tab D1
+//   co -> Google Sheet "Confirm Off OT" tab D1 (falls back to roster D1)
+var rmSheetDate = {ot:'', pp:'', co:''};
+var rmSheetDateAuto = {ot:'', pp:'', co:''};
+var rmSheetDateSource = {ot:'', pp:'', co:''};
+
+// Records the date found in a sheet tab and refreshes the visible input.
+function rmRecordSheetDate(mode, stamp, sourceLabel){
+  if (!stamp) return;
+  rmSheetDateAuto[mode] = stamp;
+  rmSheetDateSource[mode] = sourceLabel || '';
+  // A manual override is never silently replaced by a re-fetch.
+  var el = document.getElementById(mode+'DateInput');
+  var userEdited = el && el.dataset && el.dataset.userEdited === '1';
+  if (!userEdited) {
+    rmSheetDate[mode] = stamp;
+    rmRefreshDateInputs();
+  }
+  rmUpdateDateHints();
+}
+
+// Writes the recorded dates back into the editable inputs (only when not hand-edited).
+function rmRefreshDateInputs(){
+  [['ot','otDateInput'],['pp','ppDateInput'],['co','coDateInput']].forEach(function(pair){
+    var el = document.getElementById(pair[1]);
+    if (!el) return;
+    if (el.dataset && el.dataset.userEdited === '1') return;
+    el.value = rmSheetDate[pair[0]] || '';
+  });
+}
+
+// Manual override - user typed their own date.
+function rmOnDateInput(mode, value){
+  var el = document.getElementById(mode+'DateInput');
+  if (el) {
+    el.dataset.userEdited = '1';
+    // oninput may fire before the value settles; trust the element when it differs.
+    if (el.value && el.value !== value) value = el.value;
+  }
+  var v = String(value || '').trim();
+  // Emptying the box restores the auto-detected date.
+  rmSheetDate[mode] = v || rmSheetDateAuto[mode] || '';
+  rmUpdateDateHints();
+}
+
+// Shows where each date came from, so a wrong value is obvious.
+function rmUpdateDateHints(){
+  [['ot','otDateHint'],['pp','ppDateHint'],['co','coDateHint']].forEach(function(pair){
+    var el = document.getElementById(pair[1]);
+    if (!el) return;
+    var mode = pair[0];
+    var stamp = rmSheetDate[mode];
+    var src = rmSheetDateSource[mode];
+    var inp = document.getElementById(mode+'DateInput');
+    var manual = inp && inp.dataset && inp.dataset.userEdited === '1' && String(inp.value||'').trim();
+    if (manual) {
+      el.textContent = 'manual override';
+    } else {
+      el.textContent = stamp ? (src ? 'from ' + src : stamp) : 'not detected yet';
+    }
+  });
+}
+
+// Date used in the export file name: the captured sheet date (or the user's manual override).
+function rmExportStampFor(mode){
+  var stamp = String(rmSheetDate[mode] || '').trim();
+  if (stamp) return stamp.replace(/[^0-9]/g,'');
+  return rmTodayStamp();
+}
+
+// Converts a sheet date cell into YYYYMMDD.
+// GAS returns D1 as an ISO string ("2026-10-29T00:00:00.000Z"); Excel may give a Date or serial.
+function rmStampFromValue(v){
+  if (v === null || v === undefined || v === '') return '';
+  if (v instanceof Date) return rmDateToStamp(v);
+  var s = String(v).trim();
+  if (!s) return '';
+  var iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) return iso[1]+String(iso[2]).padStart(2,'0')+String(iso[3]).padStart(2,'0');
+  var num = Number(s);
+  if (isFinite(num)) return rmDateToStamp(num);
+  // e.g. "29-Oct" / "29-Oct-2026"
+  var txt = s.match(/^(\d{1,2})[-\s]([A-Za-z]{3})[-\s]?(\d{4})?/);
+  if (txt) {
+    var months = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+    var mo = months[txt[2].toLowerCase()];
+    if (mo) {
+      var year = txt[3] ? txt[3] : String(new Date().getFullYear());
+      return year+String(mo).padStart(2,'0')+String(txt[1]).padStart(2,'0');
+    }
+  }
+  return '';
+}
+
+// Reads cell D1 of a Google Sheet tab payload and returns YYYYMMDD.
+function rmSheetD1Stamp(sheetPayload){
+  if (!sheetPayload || !sheetPayload.values || !sheetPayload.values.length) return '';
+  var row0 = sheetPayload.values[0] || [];
+  return rmStampFromValue(row0[3]);
+}
+
+// Finds the header row (ID / NAME / TEAM) and returns {row, idCol, nameCol, teamCol}.
+function rmFindHeader(values){
+  for(var r=0; r<Math.min(values.length,30); r++){
+    var found={};
+    for(var c=0; c<Math.min(values[r].length,25); c++){
+      var v=String(values[r][c]==null?'':values[r][c]).trim().toUpperCase();
+      if(v==='ID'||v==='SERVICE ID')found.id=c;
+      else if(v==='NAME'||v==='OFFICER'||v==='OFFICER NAME')found.name=c;
+      else if(v==='TEAM')found.team=c;
+    }
+    if(found.id!==undefined&&found.name!==undefined&&found.team!==undefined){
+      return {row:r, idCol:found.id, nameCol:found.name, teamCol:found.team};
+    }
+  }
+  return null;
+}
+
+// Which tab + header column the analysis scans for a given mode and data source.
+// Mirrors the scan rules used by gasAnalyseWorkbook / rmAnalyseWorkbook:
+//   Roster source   -> pp scans column F, co scans column E
+//   Tab source      -> every date column after ID / Name / Team (first one is D)
+function rmScanTarget(mode, source){
+  var upper=String(source||'').toUpperCase();
+  if(upper==='ROSTER') return {tabKey:'roster', colIdx:(mode==='pp'?5:4), label:'Roster tab'};
+  if(mode==='pp') return {tabKey:'pp', colIdx:null, label:'PrePlanned OT tab'};
+  return {tabKey:'co', colIdx:null, label:'Confirm Off OT tab'};
+}
+
+// Export date for the currently selected data source of a roster-mode tab.
+function rmDateForSource(mode, source){
+  var payload = (mode==='pp') ? ppMaster.rawGAS : masterData.rawGAS;
+  if(!payload) return {stamp:'', label:''};
+  var target = rmScanTarget(mode, source);
+  var candidates = [target];
+  // Fall back to the Roster tab column this mode scans when the selected tab has no date.
+  var rosterTarget = rmScanTarget(mode, 'Roster');
+  if(target.tabKey!==rosterTarget.tabKey) candidates.push(rosterTarget);
+
+  for(var i=0;i<candidates.length;i++){
+    var t = candidates[i];
+    var tab = payload[t.tabKey];
+    if(!tab || !tab.values || !tab.values.length) continue;
+    var head = rmFindHeader(tab.values);
+    if(!head) continue;
+    var colIdx = (t.colIdx===null) ? Math.max(head.idCol, head.nameCol, head.teamCol)+1 : t.colIdx;
+    var row = tab.values[head.row]||[];
+    var stamp = rmStampFromValue(row[colIdx]);
+    if(stamp){
+      var cellRef = rmNumToCol(colIdx+1)+(head.row+1);
+      return {stamp:stamp, label:t.label+' '+cellRef};
+    }
+  }
+  return {stamp:'', label:''};
+}
+
+// Re-derives the export date when the data source changes.
+// A source change always wins over a manual edit, because the analysed column changed.
+function rmOnSourceChange(mode){
+  rmApplyDateForSource(mode, true);
+}
+
+// After an analysis, refresh the export date from the source that was analysed.
+// The analysis result carries the roster/date header it actually matched, which is
+// the most accurate value for the Excel-upload path.
+function rmSyncDateAfterAnalysis(mode, source){
+  var st = ROSTER_MODE_STATE[mode];
+  if(st && st.results && st.results.length){
+    var matched = rmStampFromValue(st.results[0].rosterDate);
+    if(matched){
+      rmSetSheetDate(mode, matched, 'matched column', false);
+      return;
+    }
+  }
+  rmApplyDateForSource(mode, false);
+}
+
+// Stores the date for a tab. force = true overrides a manual edit.
+function rmSetSheetDate(mode, stamp, label, force){
+  if(!stamp) return;
+  rmSheetDateAuto[mode] = stamp;
+  rmSheetDateSource[mode] = label || '';
+  var el = document.getElementById(mode+'DateInput');
+  var edited = el && el.dataset && el.dataset.userEdited === '1';
+  if(force || !edited){
+    rmSheetDate[mode] = stamp;
+    if(el){ el.value = stamp; delete el.dataset.userEdited; }
+  }
+  rmUpdateDateHints();
+}
+
+// Applies the date for the currently selected data source of a roster-mode tab.
+function rmApplyDateForSource(mode, force){
+  var srcEl = document.getElementById(mode+'Source');
+  if(!srcEl) return;
+  var info = rmDateForSource(mode, srcEl.value);
+  if(!info.stamp) return;
+  rmSetSheetDate(mode, info.stamp, info.label, force);
+}
+
+// Converts a Date object or Excel serial number into YYYYMMDD.
+// Uses UTC parts so the date never shifts with the viewer's timezone.
+function rmDateToStamp(v){
+  if (v instanceof Date) {
+    if (isNaN(v.getTime())) return '';
+    return String(v.getUTCFullYear())+String(v.getUTCMonth()+1).padStart(2,'0')+String(v.getUTCDate()).padStart(2,'0');
+  }
+  var n = Number(v);
+  if (!isFinite(n)) return '';
+  var d = new Date(Math.round((n-25569)*86400*1000));
+  if (isNaN(d.getTime())) return '';
+  return String(d.getUTCFullYear())+String(d.getUTCMonth()+1).padStart(2,'0')+String(d.getUTCDate()).padStart(2,'0');
+}
+
+function rmTodayStamp(){
+  var d = new Date();
+  return String(d.getFullYear())+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+}
+
+// Holdback OT  -> date comes from the Google Sheet "Roster" tab, cell D1
+// PrePlanned OT-> date comes from the Google Sheet "PrePlanned OT" tab, cell D1
+// Confirm Off OT-> date comes from the Google Sheet "Confirm Off OT" tab, cell D1
+function rmHoldbackExportStamp(){
+  var raw = masterData.rawGAS;
+  if (raw && raw.roster) {
+    var s = rmSheetD1Stamp(raw.roster);
+    if (s) return s;
+  }
+  if (rmRosterStatusDate) {
+    var s2 = rmStampFromValue(rmRosterStatusDate);
+    if (s2) return s2;
+  }
+  return rmTodayStamp();
+}
+
+function rmRosterModeExportStamp(mode){
+  var st = ROSTER_MODE_STATE[mode];
+  // PrePlanned OT: use D1 of the "PrePlanned OT" tab explicitly.
+  if (mode === 'pp' && ppMaster.rawGAS && ppMaster.rawGAS.pp) {
+    var pd = rmSheetD1Stamp(ppMaster.rawGAS.pp);
+    if (pd) return pd;
+  }
+  // Otherwise use the date column the analysis actually matched (Excel upload path).
+  if (st && st.results && st.results.length) {
+    var s = rmStampFromValue(st.results[0].rosterDate);
+    if (s) return s;
+  }
+  if (mode === 'co' && masterData.rawGAS && masterData.rawGAS.co) {
+    var cd = rmSheetD1Stamp(masterData.rawGAS.co);
+    if (cd) return cd;
+  }
+  if (mode === 'co' && masterData.rawGAS && masterData.rawGAS.roster) {
+    var rd = rmSheetD1Stamp(masterData.rawGAS.roster);
+    if (rd) return rd;
+  }
+  return rmTodayStamp();
+}
+function exportHoldbackXlsx() {
+  previewHoldbackXLSX();
+  var rows = buildHoldbackPreviewRows();
+  if (rows.length <= 1) { alert("No data to export!"); return; }
+  exportRowsToXlsx(rows, 'Holdback_OT_'+rmExportStampFor('ot')+'.xlsx', 'Holdback OT');
+}
+
+function exportRosterModeXlsx(mode) {
+  previewRosterModeXlsx(mode);
+  var st = ROSTER_MODE_STATE[mode];
+  if (!st || !st.results.length) { alert("No data to export! Run the analysis first."); return; }
+  var rows = rmExportBodyRows(st.results);
+  if (rows.length <= 1) { alert("No data to export!"); return; }
+  var prefix = (mode === 'pp') ? 'PrePlanned_OT' : 'Confirm_Off_OT';
+  exportRowsToXlsx(rows, prefix+'_'+rmExportStampFor(mode)+'.xlsx', st.title);
 }
 
 function copyHoldbackPreview() {
