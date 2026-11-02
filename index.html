@@ -328,7 +328,7 @@ table.ot tbody tr.skiprow{opacity:.45}
           </div>
         </div>
       </div>
-      <div class="alert warn">Priority set to <b>Roster</b>. For Roster source, Confirm Off OT checks <b>column E only</b>. For Confirm Off OT source, it checks all roster/date columns after ID, Name and Team.</div>
+      <div class="alert warn">Priority set to <b>Roster</b>. For Roster source, Confirm Off OT checks <b>column E only</b> - if column E is missing or has no date header, the analysis stops with an error. For Confirm Off OT source, it checks all roster/date columns after ID, Name and Team.</div>
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
         <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">Export date</label>
         <input type="text" id="coDateInput" class="noteinp" style="width:110px; padding:4px 6px; font-family:monospace;" placeholder="YYYYMMDD" oninput="rmOnDateInput('co', this.value)">
@@ -372,7 +372,7 @@ table.ot tbody tr.skiprow{opacity:.45}
           <option value="PrePlanned OT">PrePlanned OT tab</option>
         </select>
       </div>
-      <div class="alert warn">Priority set to <b>Roster</b>. For Roster source, PrePlanned OT checks <b>column F only</b>. For PrePlanned OT source, it checks all roster/date columns after ID, Name and Team.</div>
+      <div class="alert warn">Priority set to <b>Roster</b>. For Roster source, PrePlanned OT checks <b>column F only</b> - if column F is missing or has no date header, the analysis stops with an error. For PrePlanned OT source, it checks all roster/date columns after ID, Name and Team.</div>
       <div class="bgrp">
         <button class="btn primary" onclick="runRosterModeAnalysis('pp')">Analyse PrePlanned OT</button>
         <button class="btn" id="ppCopyBtn" onclick="copyRosterModePreview('pp')" disabled style="background:var(--gbg); color:var(--green); border-color:var(--gbd); font-weight:700;">📋 Preview &amp; Copy Data</button>
@@ -604,7 +604,9 @@ function gasAnalyseWorkbook(rawGas, mode, sourceSheet) {
    var sourceIsRoster = (sUpper === 'ROSTER');
    var scanCols = [];
    if (sourceIsRoster) {
-       scanCols = rmRosterScanCols(rows[headerRowIdx], Math.max(idCol,nameCol,teamCol)+1, mode === 'pp' ? 5 : 4);
+       var rosterCol = rmRosterScanCol(rows[headerRowIdx], Math.max(idCol,nameCol,teamCol)+1, mode === 'pp' ? 5 : 4);
+       if(rosterCol === -1) throw new Error('Column ' + rmNumToCol((mode === 'pp' ? 5 : 4) + 1) + ' not found on the Roster tab. Add a date header in that column.');
+       scanCols = [rosterCol];
    } else {
        var start = Math.max(idCol, nameCol, teamCol) + 1;
        for(var c=start; c<rows[headerRowIdx].length; c++) scanCols.push(c);
@@ -633,14 +635,8 @@ function gasAnalyseWorkbook(rawGas, mode, sourceSheet) {
            var fillCls = rmClassify(hexColor);
            
            var matchType = '';
-           if(sourceIsRoster){
-             // The Roster tab marks rostered duty by VALUE ("2"), not by cell colour.
-             if(val === '2' && !rmIsNHBFill(hexColor)) matchType = 'Rostered 2';
-             if(val === 'OT2' && (fillCls === 'green' || fillCls === 'purple')) matchType = 'Rostered OT2 in ' + fillCls;
-           } else {
-             if(val === '2' && fillCls === 'blue') matchType = 'Rostered 2 in blue';
-             if(val === 'OT2' && (fillCls === 'green' || fillCls === 'purple')) matchType = 'Rostered OT2 in ' + fillCls;
-           }
+           if(val === '2' && fillCls === 'blue') matchType = 'Rostered 2 in blue';
+           if(val === 'OT2' && (fillCls === 'green' || fillCls === 'purple')) matchType = 'Rostered OT2 in ' + fillCls;
            
            if(matchType) {
                if(fillCls==='blue') uniqueBlueFills.add(hexColor);
@@ -696,15 +692,15 @@ async function rmAnalyseWorkbook(file, mode, sourceSheet){
   let scanCols=[];
   if(sourceIsRoster){
     const hdr=[]; for(let c=1;c<=maxCol;c++){ hdr[c]=grid.get(rmNumToCol(c)+headerRow)?.val; }
-    scanCols=rmRosterScanCols(hdr, Math.max(idCol,nameCol,teamCol)+1, mode==='pp'?6:5);
+    const rosterCol=rmRosterScanCol(hdr, Math.max(idCol,nameCol,teamCol)+1, mode==='pp'?6:5);
+    if(rosterCol===-1) throw new Error('Column ' + rmNumToCol((mode==='pp'?6:5)) + ' not found on the Roster tab. Add a date header in that column.');
+    scanCols=[rosterCol];
   } else { const start=Math.max(idCol,nameCol,teamCol)+1; for(let c=start;c<=maxCol;c++)scanCols.push(c); }
   const out=[];
   for(let r=headerRow+1;r<=maxRow;r++){
     const id=rmNorm(grid.get(rmNumToCol(idCol)+r)?.val), name=rmCleanName(grid.get(rmNumToCol(nameCol)+r)?.val), team=rmNorm(grid.get(rmNumToCol(teamCol)+r)?.val);
     if(!id&&!name&&!team)continue;
-    for(const c of scanCols){const cell=grid.get(rmNumToCol(c)+r); const val=rmRosterVal(cell?.val); if(!cell||!val)continue; const fillCls=cell.fill.cls; let matchType='';
-     if(sourceIsRoster){ if(val==='2'&&!rmIsNHBFill(cell.fill.rgb))matchType='Rostered 2'; if(val==='OT2'&&(fillCls==='green'||fillCls==='purple'))matchType='Rostered OT2 in '+fillCls; }
-     else { if(val==='2'&&fillCls==='blue')matchType='Rostered 2 in blue'; if(val==='OT2'&&(fillCls==='green'||fillCls==='purple'))matchType='Rostered OT2 in '+fillCls; } if(matchType){const headerVal=grid.get(rmNumToCol(c)+headerRow)?.val||rmNumToCol(c); out.push({id,name,team,rosterDate:rmIsDate(headerVal)?rmExcelDate(headerVal):String(headerVal),cell:cell.ref,value:cell.val,detectedColor:fillCls,fillRgb:cell.fill.rgb,matchType});}}
+    for(const c of scanCols){const cell=grid.get(rmNumToCol(c)+r); const val=rmRosterVal(cell?.val); if(!cell||!val)continue; const fillCls=cell.fill.cls; let matchType=''; if(val==='2'&&fillCls==='blue')matchType='Rostered 2 in blue'; if(val==='OT2'&&(fillCls==='green'||fillCls==='purple'))matchType='Rostered OT2 in '+fillCls; if(matchType){const headerVal=grid.get(rmNumToCol(c)+headerRow)?.val||rmNumToCol(c); out.push({id,name,team,rosterDate:rmIsDate(headerVal)?rmExcelDate(headerVal):String(headerVal),cell:cell.ref,value:cell.val,detectedColor:fillCls,fillRgb:cell.fill.rgb,matchType});}}
   }
   return {results:out, info:{fileName:file.name,sheetName:sheet.name,headerRow,scan:sourceIsRoster?('Column '+rmNumToCol(scanCols[0])):'All roster columns after Team', blueFills:styles.fillColors.filter(f=>f.cls==='blue').map(f=>f.rgb).filter(Boolean), greenFills:styles.fillColors.filter(f=>f.cls==='green').map(f=>f.rgb).filter(Boolean), purpleFills:styles.fillColors.filter(f=>f.cls==='purple').map(f=>f.rgb).filter(Boolean)}};
 }
@@ -1782,13 +1778,6 @@ function rmFindHeader(values){
   return null;
 }
 
-// Yellow fill marks NHB (not holding back) in the roster.
-function rmIsNHBFill(rgb){
-  var c=String(rgb||'').toLowerCase();
-  if(c.charAt(0)==='#')c=c.substring(1);
-  return c==='ffff00'||c==='ffffff00'||c.slice(-6)==='ffff00';
-}
-
 // True when a header cell holds a date-like value (ISO string, Date, or Excel serial).
 function rmIsDateHeader(v){
   if(v===null||v===undefined||v==='')return false;
@@ -1801,18 +1790,14 @@ function rmIsDateHeader(v){
   return false;
 }
 
-// Chooses which roster date column(s) to scan.
-// Preference is column F (pp) / column E (co). The roster sheet rolls its date
-// columns, so when the preferred column is absent we fall back to the last
-// date column that actually exists.
-function rmRosterScanCols(headerRow, firstDateCol, preferredCol){
-  var dateCols=[];
-  for(var c=firstDateCol; c<headerRow.length; c++){
-    if(rmIsDateHeader(headerRow[c]))dateCols.push(c);
-  }
-  if(!dateCols.length)return [];
-  if(dateCols.indexOf(preferredCol)!==-1)return [preferredCol];
-  return [dateCols[dateCols.length-1]];
+// Returns the single roster date column to scan.
+// Strict: the preferred column (F for pp, E for co) must exist and hold a date
+// header. If it does not, the caller reports a clear error instead of silently
+// scanning a different column.
+function rmRosterScanCol(headerRow, firstDateCol, preferredCol){
+  if(!headerRow || preferredCol>=headerRow.length) return -1;
+  if(!rmIsDateHeader(headerRow[preferredCol])) return -1;
+  return preferredCol;
 }
 
 // Which tab + header column the analysis scans for a given mode and data source.
@@ -1847,11 +1832,11 @@ function rmDateForSource(mode, source){
     if(t.colIdx===null){
       colIdx = Math.max(head.idCol, head.nameCol, head.teamCol)+1;
     } else {
-      // Roster source: use the same column the analysis actually scans.
+      // Roster source: use the same strict column the analysis scans.
       var first = Math.max(head.idCol, head.nameCol, head.teamCol)+1;
-      var cols = rmRosterScanCols(row, first, t.colIdx);
-      if(!cols.length) continue;
-      colIdx = cols[0];
+      var col = rmRosterScanCol(row, first, t.colIdx);
+      if(col === -1) continue;
+      colIdx = col;
     }
     var stamp = rmStampFromValue(row[colIdx]);
     if(stamp){
